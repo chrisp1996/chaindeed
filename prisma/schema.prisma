@@ -1,0 +1,445 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  BUYER
+  SELLER
+  AGENT
+  TITLE_COMPANY
+  ATTORNEY
+  ADMIN
+}
+
+enum ContractStatus {
+  DRAFT
+  PENDING_SIGNATURES
+  ACTIVE
+  IN_ESCROW
+  PENDING_CLOSING
+  CLOSED
+  CANCELLED
+  DISPUTED
+}
+
+enum ContractType {
+  SIMPLE_TRANSACTION
+  REAL_ESTATE_PURCHASE
+  TOKENIZED_PROPERTY
+  FRACTIONAL_INVESTMENT
+}
+
+enum OffChainStepStatus {
+  PENDING
+  IN_PROGRESS
+  COMPLETE
+  BLOCKED
+  WAIVED
+}
+
+enum NotificationChannel {
+  EMAIL
+  IN_APP
+  SMS
+}
+
+enum NotificationType {
+  SIGNATURE_NEEDED
+  DOCUMENT_UPLOADED
+  DOCUMENT_REQUIRED
+  DEADLINE_APPROACHING
+  STEP_COMPLETED
+  STEP_OVERDUE
+  FUNDS_DEPOSITED
+  FUNDS_RELEASED
+  DISPUTE_RAISED
+  HOMESTEAD_REMINDER
+  SALES_DISCLOSURE_REMINDER
+  KYC_APPROVED
+  KYC_REJECTED
+  GENERAL
+}
+
+enum KycStatus {
+  NOT_STARTED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum WalletMethod {
+  METAMASK
+  COINBASE_WALLET
+  WALLET_CONNECT
+  MAGIC_LINK
+  PRIVY
+}
+
+enum DocumentType {
+  CONTRACT_SUMMARY
+  CLOSING_CHECKLIST
+  RECORDER_COVER_SHEET
+  HOMESTEAD_LETTER
+  WHAT_TO_BRING
+  SALES_DISCLOSURE_COVER
+  SELLER_DISCLOSURE
+  TITLE_COMMITMENT
+  DEED
+  PURCHASE_AGREEMENT
+  INSPECTION_REPORT
+  INSURANCE_PROOF
+  OTHER
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  name              String?
+  phone             String?
+  walletAddress     String?   @unique
+  role              UserRole  @default(BUYER)
+  kycStatus         KycStatus @default(NOT_STARTED)
+  kycVerifiedAt     DateTime?
+  kycDocumentCids   String[]
+  isAdmin           Boolean   @default(false)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  buyerContracts      Contract[]           @relation("BuyerContracts")
+  sellerContracts     Contract[]           @relation("SellerContracts")
+  agentContracts      Contract[]           @relation("AgentContracts")
+  notifications       Notification[]
+  walletOnboarding    WalletOnboarding[]
+  completedSteps      OffChainStep[]       @relation("CompletedByUser")
+  investmentHoldings  InvestmentHolding[]
+  daoVotes            DaoVote[]
+  fraudFlags          FraudFlag[]          @relation("FlaggedBy")
+}
+
+model Property {
+  id               String   @id @default(cuid())
+  streetAddress    String
+  city             String
+  state            String   // OH, KY, IN, etc.
+  zipCode          String
+  county           String
+  apn              String?  // Assessor Parcel Number
+  legalDescription String?
+  propertyType     String   // residential, commercial, land
+  bedrooms         Int?
+  bathrooms        Float?
+  squareFeet       Int?
+  lotSizeAcres     Float?
+  yearBuilt        Int?
+  zoning           String?
+
+  // Ownership verification
+  currentOwnerName  String?
+  ownershipVerified Boolean  @default(false)
+  attomPropertyId   String?
+
+  // For tokenized properties
+  isTokenized       Boolean  @default(false)
+  tokenContractAddr String?
+  totalShares       Int?
+
+  // IPFS
+  photosCids        String[]
+  documentCids      String[]
+
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  contracts         Contract[]
+  tokenOfferings    TokenOffering[]
+}
+
+model Contract {
+  id                  String         @id @default(cuid())
+  type                ContractType
+  status              ContractStatus @default(DRAFT)
+  state               String?        // OH, KY, IN
+
+  // Parties
+  buyerId             String?
+  sellerId            String?
+  agentId             String?
+  titleCompany        String?
+  arbiterAddress      String?
+
+  // Property
+  propertyId          String?
+
+  // Financial
+  purchasePrice       Float?
+  earnestMoneyAmount  Float?
+
+  // Blockchain
+  contractAddress     String?        // deployed contract address
+  chainId             Int?
+  txHash              String?
+  blockNumber         Int?
+
+  // IPFS document CIDs
+  purchaseContractCid String?
+  sellerDisclosureCid String?
+  titleCommitmentCid  String?
+  deedCid             String?
+
+  // Conditions (mirrors on-chain flags)
+  titleClear          Boolean @default(false)
+  disclosureDelivered Boolean @default(false)
+  inspectionComplete  Boolean @default(false)
+  fundingConfirmed    Boolean @default(false)
+  salesDisclosureFiled Boolean @default(false)
+
+  // Dates
+  offerDate           DateTime?
+  acceptanceDate      DateTime?
+  inspectionDeadline  DateTime?
+  financingDeadline   DateTime?
+  closingDate         DateTime?
+  closedAt            DateTime?
+
+  // State law hash (keccak256 of state config stored on-chain)
+  stateLawHash        String?
+
+  // Wizard progress (persisted for "save and return")
+  wizardStep          Int     @default(1)
+  wizardData          Json?
+
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+
+  // Relations
+  buyer               User?          @relation("BuyerContracts", fields: [buyerId], references: [id])
+  seller              User?          @relation("SellerContracts", fields: [sellerId], references: [id])
+  agent               User?          @relation("AgentContracts", fields: [agentId], references: [id])
+  property            Property?      @relation(fields: [propertyId], references: [id])
+  offChainSteps       OffChainStep[]
+  notifications       Notification[]
+  generatedDocuments  GeneratedDocument[]
+  dispute             Dispute?
+  signatures          ContractSignature[]
+}
+
+model ContractSignature {
+  id            String   @id @default(cuid())
+  contractId    String
+  signerAddress String
+  signerEmail   String?
+  signedAt      DateTime?
+  signatureHash String?
+  role          String   // buyer, seller, agent, arbiter
+  emailLinkToken String? @unique
+  emailLinkExpiry DateTime?
+  createdAt     DateTime @default(now())
+
+  contract      Contract @relation(fields: [contractId], references: [id])
+}
+
+model OffChainStep {
+  id               String             @id @default(cuid())
+  contractId       String
+  stepKey          String             // e.g. "OH_INSPECTION", "IN_SALES_DISCLOSURE"
+  state            String             // OH, KY, IN, ALL
+  title            String
+  description      String
+  legalBasis       String?
+  responsibility   String             // buyer, seller, both, title_company
+  estimatedCost    String?
+  estimatedTime    String?
+  isRequired       Boolean            @default(true)
+  isBlocker        Boolean            @default(false)
+  sortOrder        Int
+  status           OffChainStepStatus @default(PENDING)
+  completedAt      DateTime?
+  completedByUserId String?
+  uploadedDocCid   String?
+  notes            String?
+
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  contract         Contract           @relation(fields: [contractId], references: [id])
+  completedBy      User?              @relation("CompletedByUser", fields: [completedByUserId], references: [id])
+}
+
+model Notification {
+  id         String              @id @default(cuid())
+  userId     String
+  contractId String?
+  type       NotificationType
+  message    String
+  metadata   Json?
+  readAt     DateTime?
+  sentAt     DateTime?
+  channel    NotificationChannel
+  createdAt  DateTime            @default(now())
+
+  user       User     @relation(fields: [userId], references: [id])
+  contract   Contract? @relation(fields: [contractId], references: [id])
+}
+
+model GeneratedDocument {
+  id          String       @id @default(cuid())
+  contractId  String
+  docType     DocumentType
+  ipfsCid     String?
+  localPath   String?
+  generatedAt DateTime     @default(now())
+  version     Int          @default(1)
+  generatedBy String?
+
+  contract    Contract     @relation(fields: [contractId], references: [id])
+}
+
+model WalletOnboarding {
+  id          String       @id @default(cuid())
+  userId      String
+  method      WalletMethod
+  completedAt DateTime?
+  createdAt   DateTime     @default(now())
+
+  user        User         @relation(fields: [userId], references: [id])
+}
+
+model TokenOffering {
+  id                String    @id @default(cuid())
+  propertyId        String
+  contractAddress   String?
+  title             String
+  description       String?
+  totalShares       Int
+  sharePrice        Float     // in USD
+  targetAmount      Float     // USD
+  raisedAmount      Float     @default(0)
+  minInvestment     Float
+  maxInvestment     Float?
+  accreditedOnly    Boolean   @default(false)
+  status            String    @default("DRAFT") // DRAFT, ACTIVE, FUNDED, CLOSED
+  closingDate       DateTime?
+  projectedReturn   Float?    // annual %
+  ipfsCid           String?   // offering documents
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  property          Property  @relation(fields: [propertyId], references: [id])
+  holdings          InvestmentHolding[]
+  daoProposals      DaoProposal[]
+}
+
+model InvestmentHolding {
+  id              String    @id @default(cuid())
+  userId          String
+  offeringId      String
+  shares          Int
+  purchasePrice   Float
+  purchasedAt     DateTime  @default(now())
+  txHash          String?
+
+  user            User         @relation(fields: [userId], references: [id])
+  offering        TokenOffering @relation(fields: [offeringId], references: [id])
+  distributions   Distribution[]
+}
+
+model Distribution {
+  id              String   @id @default(cuid())
+  holdingId       String
+  amount          Float    // USD
+  maticAmount     String?  // wei as string
+  distributedAt   DateTime @default(now())
+  txHash          String?
+  description     String?
+
+  holding         InvestmentHolding @relation(fields: [holdingId], references: [id])
+}
+
+model DaoProposal {
+  id              String   @id @default(cuid())
+  offeringId      String
+  proposerAddress String
+  title           String
+  description     String
+  proposalType    String   // sell, refinance, renovation, change_manager
+  status          String   @default("ACTIVE") // ACTIVE, PASSED, FAILED, EXECUTED
+  votesFor        Int      @default(0)
+  votesAgainst    Int      @default(0)
+  quorumRequired  Int
+  deadline        DateTime
+  executedAt      DateTime?
+  txHash          String?
+  createdAt       DateTime @default(now())
+
+  offering        TokenOffering @relation(fields: [offeringId], references: [id])
+  votes           DaoVote[]
+}
+
+model DaoVote {
+  id          String   @id @default(cuid())
+  proposalId  String
+  userId      String
+  vote        Boolean  // true = for, false = against
+  weight      Int      // share count at time of vote
+  txHash      String?
+  createdAt   DateTime @default(now())
+
+  proposal    DaoProposal @relation(fields: [proposalId], references: [id])
+  user        User        @relation(fields: [userId], references: [id])
+}
+
+model Dispute {
+  id              String   @id @default(cuid())
+  contractId      String   @unique
+  raisedByAddress String
+  raisedAt        DateTime @default(now())
+  description     String
+  status          String   @default("OPEN") // OPEN, IN_REVIEW, RESOLVED
+  resolution      String?
+  resolvedAt      DateTime?
+  arbiter1        String?
+  arbiter2        String?
+  arbiter3        String?
+  votes           Json?    // {arbiter: vote}
+  txHash          String?
+
+  contract        Contract @relation(fields: [contractId], references: [id])
+}
+
+model FraudFlag {
+  id          String   @id @default(cuid())
+  contractId  String?
+  userId      String?
+  flaggedBy   String
+  reason      String
+  reviewed    Boolean  @default(false)
+  reviewedAt  DateTime?
+  reviewNote  String?
+  createdAt   DateTime @default(now())
+
+  flaggedByUser User?  @relation("FlaggedBy", fields: [flaggedBy], references: [id])
+}
+
+model AdminAuditLog {
+  id         String   @id @default(cuid())
+  adminId    String
+  action     String
+  entityType String
+  entityId   String
+  metadata   Json?
+  createdAt  DateTime @default(now())
+}
+
+model SavedSearch {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  filters   Json
+  createdAt DateTime @default(now())
+}

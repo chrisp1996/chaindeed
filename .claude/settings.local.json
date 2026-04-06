@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --no-git)",
+      "Bash(npm --version)",
+      "Bash(export PATH=\"$PATH:/usr/local/bin:/opt/homebrew/bin:/usr/bin\")",
+      "Read(//opt/homebrew/bin/**)",
+      "Read(//Users/christopherpierson/.nvm/versions/**)",
+      "Read(//usr/**)",
+      "Bash(source ~/.zshrc)",
+      "Bash(source ~/.bashrc)",
+      "Bash(source ~/.nvm/nvm.sh)",
+      "Bash(curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh)",
+      "Bash(bash)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/*.env* /Users/christopherpierson/Downloads/ChainDeed/.env*)",
+      "Bash(pg_isready)",
+      "Bash(/usr/local/bin/pg_isready)",
+      "Bash(/opt/homebrew/bin/pg_isready)",
+      "Bash(brew list:*)",
+      "Bash(/opt/homebrew/bin/brew list:*)",
+      "Bash(export PATH=\"/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH\")",
+      "Bash(createdb chaindeed:*)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)"
+    ]
+  }
+}
