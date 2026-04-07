@@ -30,7 +30,15 @@
       "Bash(git add:*)",
       "Bash(git commit:*)",
       "Bash(npx hardhat:*)",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/contracts/)",
+      "Bash(python3 -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\({**d.get\\(''''dependencies'''',{}\\), **d.get\\(''''devDependencies'''',{}\\)}, indent=2\\)\\)\")",
+      "Bash(grep -n \"Download\\\\|pdf\" /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/contracts/[id]/page.tsx)",
+      "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/amendments/[amendId])",
+      "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/view)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/amendments/)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/view/)"
     ]
   }
 }
