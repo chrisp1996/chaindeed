@@ -38,7 +38,15 @@
       "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/view)",
       "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/)",
       "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/amendments/)",
-      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/view/)"
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/view/)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/)",
+      "Bash(/usr/local/bin/npm run:*)",
+      "Bash(export PATH=\"$PATH:/Users/christopherpierson/.nvm/versions/node/v20.20.2/bin\")",
+      "Bash(npx shadcn@latest add dropdown-menu --yes)",
+      "Bash(export PATH=$PATH:/Users/christopherpierson/.nvm/versions/node/v20.20.2/bin)",
+      "Bash(npm list:*)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/.env*)",
+      "Bash(grep -r \"neon\" /Users/christopherpierson/Downloads/ChainDeed/.env*)"
     ]
   }
 }
