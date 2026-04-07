@@ -1,21 +1,21 @@
 export interface IpfsUploadResult { cid: string; url: string; }
 
 export async function uploadToIpfs(file: File | Blob, fileName = 'document'): Promise<IpfsUploadResult> {
-  const token = process.env.WEB3_STORAGE_TOKEN;
-  if (!token) {
+  const jwt = process.env.PINATA_JWT;
+  if (!jwt) {
     const mockCid = `bafybeig${Math.random().toString(36).slice(2, 15)}`;
     return { cid: mockCid, url: `https://ipfs.io/ipfs/${mockCid}` };
   }
   const formData = new FormData();
-  formData.append('file', file, fileName);
-  const res = await fetch('https://api.web3.storage/upload', {
+  formData.append('file', new File([file], fileName));
+  const res = await fetch('https://api.pinata.cloud/pinning/pinFileToIPFS', {
     method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
+    headers: { Authorization: `Bearer ${jwt}` },
     body: formData,
   });
   if (!res.ok) throw new Error(`IPFS upload failed: ${res.statusText}`);
-  const { cid } = await res.json();
-  return { cid, url: `https://${cid}.ipfs.w3s.link` };
+  const { IpfsHash } = await res.json();
+  return { cid: IpfsHash, url: `https://gateway.pinata.cloud/ipfs/${IpfsHash}` };
 }
 
 export async function uploadJsonToIpfs(data: Record<string, unknown>, fileName = 'metadata.json'): Promise<IpfsUploadResult> {
