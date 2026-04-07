@@ -46,7 +46,8 @@
       "Bash(export PATH=$PATH:/Users/christopherpierson/.nvm/versions/node/v20.20.2/bin)",
       "Bash(npm list:*)",
       "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/.env*)",
-      "Bash(grep -r \"neon\" /Users/christopherpierson/Downloads/ChainDeed/.env*)"
+      "Bash(grep -r \"neon\" /Users/christopherpierson/Downloads/ChainDeed/.env*)",
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_I0n4QwThPbgm@ep-calm-fog-aej5j4x5-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate deploy)"
     ]
   }
 }
