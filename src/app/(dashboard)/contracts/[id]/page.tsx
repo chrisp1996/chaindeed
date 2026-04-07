@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency, getContractStatusLabel, formatDate } from '@/lib/utils';
-import { FileText, Home, DollarSign, Calendar } from 'lucide-react';
+import { FileText, Home, DollarSign, Calendar, Download } from 'lucide-react';
 import { toast } from 'sonner';
 
 // Mock on-chain steps — in production, read from deployed contract events
@@ -82,7 +82,11 @@ export default function ContractDetailPage() {
             Created {formatDate(contract.createdAt)}
           </p>
         </div>
-        <Button variant="outline" size="sm"><FileText className="h-4 w-4 mr-2" />Download Summary</Button>
+        <Button variant="outline" size="sm" asChild>
+          <a href={`/api/contracts/${id}/pdf`} download>
+            <Download className="h-4 w-4 mr-2" />Download Summary PDF
+          </a>
+        </Button>
       </div>
 
       {/* Key details */}
