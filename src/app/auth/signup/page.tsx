@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, CheckCircle2, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -17,8 +17,10 @@ const ROLES = [
   { value: 'AGENT', label: 'Agent / Broker', desc: "I represent buyers or sellers" },
 ];
 
-export default function SignUpPage() {
+function SignUpForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/account';
   const { signup } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -41,7 +43,7 @@ export default function SignUpPage() {
       return;
     }
     toast.success('Account created! Welcome to ChainDeed.');
-    router.push('/account');
+    router.push(redirect);
   }
 
   return (
@@ -130,5 +132,13 @@ export default function SignUpPage() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense>
+      <SignUpForm />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { Suspense, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -11,8 +11,10 @@ import { Label } from '@/components/ui/label';
 import { useAuth } from '@/lib/useAuth';
 import { toast } from 'sonner';
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const redirect = searchParams.get('redirect') || '/account';
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +31,7 @@ export default function LoginPage() {
       return;
     }
     toast.success('Welcome back!');
-    router.push('/account');
+    router.push(redirect);
   }
 
   return (
@@ -74,9 +76,17 @@ export default function LoginPage() {
 
         <p className="text-center text-sm text-muted-foreground">
           Don't have an account?{' '}
-          <Link href="/auth/signup" className="text-primary font-medium hover:underline">Create one free</Link>
+          <Link href={`/auth/signup${redirect !== '/account' ? `?redirect=${redirect}` : ''}`} className="text-primary font-medium hover:underline">Create one free</Link>
         </p>
       </div>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   );
 }
