@@ -47,7 +47,12 @@
       "Bash(npm list:*)",
       "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/.env*)",
       "Bash(grep -r \"neon\" /Users/christopherpierson/Downloads/ChainDeed/.env*)",
-      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_I0n4QwThPbgm@ep-calm-fog-aej5j4x5-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate deploy)"
+      "Bash(DATABASE_URL=\"postgresql://neondb_owner:npg_I0n4QwThPbgm@ep-calm-fog-aej5j4x5-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require\" npx prisma migrate deploy)",
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed remote -v)",
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed log --oneline -5)",
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed push origin main)",
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed fetch origin)",
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed log origin/main --oneline -5)"
     ]
   }
 }
