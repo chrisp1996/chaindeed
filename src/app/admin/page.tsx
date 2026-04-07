@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 import { formatCurrency, formatDate } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const MOCK_KYC = [
   { id: '1', name: 'John Smith', email: 'john@example.com', submittedAt: new Date(Date.now() - 7200000), status: 'PENDING', docs: ['drivers_license.pdf', 'utility_bill.pdf'] },
@@ -36,6 +37,32 @@ const stats = [
 
 export default function AdminPage() {
   const [search, setSearch] = useState('');
+  const [kycList, setKycList] = useState(MOCK_KYC);
+  const [kycLoading, setKycLoading] = useState<string | null>(null);
+
+  async function handleKyc(userId: string, action: 'approve' | 'reject') {
+    setKycLoading(userId);
+    try {
+      const res = await fetch(`/api/admin/kyc/${userId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      });
+      if (res.ok) {
+        setKycList(prev => prev.map(k => k.id === userId
+          ? { ...k, status: action === 'approve' ? 'APPROVED' : 'REJECTED' }
+          : k
+        ));
+        toast.success(action === 'approve' ? 'User approved — confirmation email sent.' : 'User rejected — notification sent.');
+      } else {
+        toast.error('Action failed. Please try again.');
+      }
+    } catch {
+      toast.error('Network error. Please try again.');
+    } finally {
+      setKycLoading(null);
+    }
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -77,14 +104,14 @@ export default function AdminPage() {
           {/* KYC Review */}
           <TabsContent value="kyc" className="space-y-4">
             <h2 className="text-lg font-semibold">Identity Verification Queue</h2>
-            {MOCK_KYC.map(kyc => (
+            {kycList.map(kyc => (
               <Card key={kyc.id}>
                 <CardContent className="pt-4 pb-4">
                   <div className="flex items-start justify-between gap-4">
                     <div className="space-y-1">
                       <div className="flex items-center gap-2">
                         <p className="font-medium">{kyc.name}</p>
-                        <Badge variant={kyc.status === 'APPROVED' ? 'success' : 'warning'}>{kyc.status}</Badge>
+                        <Badge variant={kyc.status === 'APPROVED' ? 'success' : kyc.status === 'REJECTED' ? 'destructive' : 'warning'}>{kyc.status}</Badge>
                       </div>
                       <p className="text-sm text-muted-foreground">{kyc.email}</p>
                       <p className="text-xs text-muted-foreground">Submitted {new Date(kyc.submittedAt).toLocaleString()}</p>
@@ -96,8 +123,16 @@ export default function AdminPage() {
                     </div>
                     {kyc.status === 'PENDING' && (
                       <div className="flex gap-2 shrink-0">
-                        <Button size="sm" variant="success">Approve</Button>
-                        <Button size="sm" variant="destructive">Reject</Button>
+                        <Button size="sm" variant="success"
+                          loading={kycLoading === kyc.id}
+                          onClick={() => handleKyc(kyc.id, 'approve')}>
+                          Approve
+                        </Button>
+                        <Button size="sm" variant="destructive"
+                          loading={kycLoading === kyc.id}
+                          onClick={() => handleKyc(kyc.id, 'reject')}>
+                          Reject
+                        </Button>
                       </div>
                     )}
                   </div>
