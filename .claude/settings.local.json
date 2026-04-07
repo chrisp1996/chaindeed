@@ -22,7 +22,9 @@
       "Bash(/opt/homebrew/bin/brew list:*)",
       "Bash(export PATH=\"/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH\")",
       "Bash(createdb chaindeed:*)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)"
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" http://localhost:3000)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)"
     ]
   }
 }
