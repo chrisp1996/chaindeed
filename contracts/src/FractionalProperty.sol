@@ -119,7 +119,7 @@ contract FractionalProperty is ERC1155, Ownable, ReentrancyGuard {
      */
     function claimRefund() external nonReentrant {
         require(block.timestamp > closingDeadline, "Deadline not passed");
-        require(!targetReached, "Target was reached — no refund available");
+        require(!targetReached, "Target was reached - no refund available");
 
         uint256 shares = investorShares[msg.sender];
         require(shares > 0, "No shares to refund");

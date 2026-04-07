@@ -157,7 +157,11 @@ contract SimpleEscrow is ReentrancyGuard {
         _refundBuyer();
     }
 
-    function _releaseFunds() internal nonReentrant {
+    function escrowState() public view returns (EscrowState) {
+        return state;
+    }
+
+    function _releaseFunds() internal {
         state = EscrowState.COMPLETE;
         uint256 amount = address(this).balance;
         (bool success, ) = seller.call{value: amount}("");

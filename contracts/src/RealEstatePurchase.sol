@@ -15,7 +15,7 @@ contract RealEstatePurchase is SimpleEscrow {
     // Property info
     string public propertyAddress;
     string public apn;
-    string public state; // OH, KY, IN
+    string public propertyState; // OH, KY, IN
 
     // Document IPFS CIDs
     string public purchaseContractCid;
@@ -56,7 +56,7 @@ contract RealEstatePurchase is SimpleEscrow {
         deedContract = PropertyDeed(_deedContract);
         propertyAddress = _propertyAddress;
         apn = _apn;
-        state = _state;
+        propertyState = _state;
         stateLawHash = _stateLawHash;
     }
 
@@ -109,7 +109,7 @@ contract RealEstatePurchase is SimpleEscrow {
         bool baseConditions = titleClear && disclosureDelivered && inspectionComplete && fundingConfirmed;
 
         // Indiana requires sales disclosure filing
-        if (keccak256(bytes(state)) == keccak256(bytes("IN"))) {
+        if (keccak256(bytes(propertyState)) == keccak256(bytes("IN"))) {
             return baseConditions && salesDisclosureFiled;
         }
 
@@ -122,13 +122,13 @@ contract RealEstatePurchase is SimpleEscrow {
      * Can only be called after funds are released (state = COMPLETE)
      */
     function registerDeed(string memory ipfsCid) external onlyArbiter {
-        require(state == EscrowState.COMPLETE, "Funds must be released before deed registration");
+        require(escrowState() == EscrowState.COMPLETE, "Funds must be released before deed registration");
         require(allConditionsMet(), "All conditions must be met");
         require(!deedMinted, "Deed already registered");
         require(bytes(ipfsCid).length > 0, "IPFS CID required");
 
         deedMinted = true;
-        deedTokenId = deedContract.mintDeed(buyer, propertyAddress, apn, state, ipfsCid);
+        deedTokenId = deedContract.mintDeed(buyer, propertyAddress, apn, propertyState, ipfsCid);
 
         emit DeedRegistered(deedTokenId, buyer);
     }

@@ -5,23 +5,24 @@ dotenv.config({ path: "../.env.local" });
 
 const config: HardhatUserConfig = {
   solidity: {
-    version: "0.8.24",
+    version: "0.8.25",
     settings: {
       optimizer: {
         enabled: true,
         runs: 200,
       },
+      evmVersion: "cancun",
     },
   },
   networks: {
     hardhat: {
       chainId: 31337,
     },
-    mumbai: {
-      url: process.env.POLYGON_MUMBAI_RPC_URL || "https://rpc-mumbai.maticvigil.com",
-      chainId: 80001,
+    amoy: {
+      url: "https://rpc-amoy.polygon.technology",
+      chainId: 80002,
       accounts: process.env.DEPLOYER_PRIVATE_KEY ? [process.env.DEPLOYER_PRIVATE_KEY] : [],
-      gasPrice: 30000000000, // 30 Gwei
+      gasPrice: 5000000000, // 5 Gwei
     },
     polygon: {
       url: process.env.POLYGON_RPC_URL || "https://polygon-rpc.com",
