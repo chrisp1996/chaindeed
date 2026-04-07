@@ -28,7 +28,9 @@
       "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/invest/[id])",
       "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/api/admin/kyc/[id])",
       "Bash(git add:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(npx hardhat:*)",
+      "Bash(git rm:*)"
     ]
   }
 }
