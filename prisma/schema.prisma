@@ -227,6 +227,8 @@ model Contract {
   generatedDocuments  GeneratedDocument[]
   dispute             Dispute?
   signatures          ContractSignature[]
+  amendments          ContractAmendment[]
+  views               ContractView[]
 }
 
 model ContractSignature {
@@ -442,4 +444,37 @@ model SavedSearch {
   name      String
   filters   Json
   createdAt DateTime @default(now())
+}
+
+enum AmendmentStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+  REVISED
+  SUPERSEDED
+}
+
+model ContractAmendment {
+  id            String          @id @default(cuid())
+  contractId    String
+  contract      Contract        @relation(fields: [contractId], references: [id])
+  proposedBy    String          // 'buyer' | 'seller' | email
+  version       Int             @default(1)
+  status        AmendmentStatus @default(PENDING)
+  changes       Json            // Change[]
+  summary       String
+  message       String?
+  parentId      String?         // if this is a counter-proposal
+  createdAt     DateTime        @default(now())
+  respondedAt   DateTime?
+  respondedBy   String?
+}
+
+model ContractView {
+  id         String   @id @default(cuid())
+  contractId String
+  contract   Contract @relation(fields: [contractId], references: [id])
+  viewedBy   String   // 'buyer' | 'seller' | email
+  viewedAt   DateTime @default(now())
+  ipAddress  String?
 }

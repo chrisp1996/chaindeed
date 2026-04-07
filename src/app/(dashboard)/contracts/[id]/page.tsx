@@ -1,15 +1,18 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { useParams } from 'next/navigation';
 import { ActionCenter, OnChainStep, OffChainStep } from '@/components/action-center/ActionCenter';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { formatCurrency, getContractStatusLabel, formatDate } from '@/lib/utils';
 import { FileText, Home, DollarSign, Calendar, Download } from 'lucide-react';
 import { toast } from 'sonner';
+import { StatusTimeline, buildTimelineFromContract } from '@/components/contracts/StatusTimeline';
+import { AmendmentPanel, Amendment, Change } from '@/components/contracts/AmendmentPanel';
 
 // Mock on-chain steps — in production, read from deployed contract events
 const MOCK_ON_CHAIN_STEPS: OnChainStep[] = [
@@ -21,17 +24,62 @@ const MOCK_ON_CHAIN_STEPS: OnChainStep[] = [
   { id: '6', title: 'Deed registered digitally', status: 'pending', description: 'Ownership permanently recorded' },
 ];
 
+// Mock current user — in production, use auth session
+const CURRENT_USER_ROLE: 'buyer' | 'seller' = 'buyer';
+
 export default function ContractDetailPage() {
   const { id } = useParams<{ id: string }>();
   const [contract, setContract] = useState<any>(null);
+  const [amendments, setAmendments] = useState<Amendment[]>([]);
+  const [views, setViews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch(`/api/contracts/${id}`)
-      .then(r => r.json())
-      .then(c => { setContract(c); setLoading(false); })
-      .catch(() => setLoading(false));
+  const fetchAmendments = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/contracts/${id}/amendments`);
+      const data = await res.json();
+      setAmendments(Array.isArray(data) ? data : []);
+    } catch {
+      setAmendments([]);
+    }
   }, [id]);
+
+  const fetchViews = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/contracts/${id}/view`);
+      const data = await res.json();
+      setViews(Array.isArray(data) ? data : []);
+    } catch {
+      setViews([]);
+    }
+  }, [id]);
+
+  useEffect(() => {
+    const loadAll = async () => {
+      try {
+        const [contractRes] = await Promise.all([
+          fetch(`/api/contracts/${id}`),
+        ]);
+        const contractData = await contractRes.json();
+        setContract(contractData);
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadAll();
+    fetchAmendments();
+    fetchViews();
+
+    // Record view (silent — mock buyer for now)
+    fetch(`/api/contracts/${id}/view`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ viewedBy: CURRENT_USER_ROLE }),
+    }).catch(() => {});
+  }, [id, fetchAmendments, fetchViews]);
 
   const handleUpdateStep = async (stepId: string, status: string) => {
     const res = await fetch(`/api/off-chain-steps/${stepId}`, {
@@ -49,7 +97,51 @@ export default function ContractDetailPage() {
     }
   };
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="animate-spin h-8 w-8 rounded-full border-4 border-primary border-t-transparent" /></div>;
+  const handleAmendmentAction = async (amendId: string, action: 'accept' | 'decline' | 'revise') => {
+    try {
+      const res = await fetch(`/api/contracts/${id}/amendments/${amendId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, respondedBy: CURRENT_USER_ROLE }),
+      });
+      if (res.ok) {
+        const actionLabel = action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'marked for revision';
+        toast.success(`Amendment ${actionLabel}.`);
+        await fetchAmendments();
+        // Re-fetch contract to get updated status
+        const contractRes = await fetch(`/api/contracts/${id}`);
+        if (contractRes.ok) setContract(await contractRes.json());
+      } else {
+        toast.error('Failed to update amendment.');
+      }
+    } catch {
+      toast.error('Failed to update amendment.');
+    }
+  };
+
+  const handleProposeChanges = async (changes: Change[], summary: string, message?: string) => {
+    try {
+      const res = await fetch(`/api/contracts/${id}/amendments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ proposedBy: CURRENT_USER_ROLE, changes, summary, message }),
+      });
+      if (res.ok) {
+        toast.success('Changes proposed successfully.');
+        await fetchAmendments();
+      } else {
+        toast.error('Failed to propose changes.');
+      }
+    } catch {
+      toast.error('Failed to propose changes.');
+    }
+  };
+
+  if (loading) return (
+    <div className="flex items-center justify-center py-20">
+      <div className="animate-spin h-8 w-8 rounded-full border-4 border-primary border-t-transparent" />
+    </div>
+  );
 
   if (!contract) return (
     <div className="text-center py-20 space-y-3">
@@ -66,6 +158,16 @@ export default function ContractDetailPage() {
     status: s.status as OffChainStep['status'],
     uploadedDocCid: s.uploadedDocCid, notes: s.notes,
   }));
+
+  const timelineEvents = buildTimelineFromContract(contract, views, amendments);
+
+  const contractData = {
+    price: contract.purchasePrice ?? undefined,
+    closingDate: contract.closingDate ?? undefined,
+    inspectionDays: undefined as number | undefined,
+    conditions: undefined as string | undefined,
+    earnestMoney: contract.earnestMoneyAmount ?? undefined,
+  };
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -99,7 +201,10 @@ export default function ContractDetailPage() {
         ].map(({ icon: Icon, label, value }) => (
           <Card key={label}>
             <CardContent className="pt-4 pb-4">
-              <div className="flex items-center gap-2 text-muted-foreground mb-1"><Icon className="h-4 w-4" /><span className="text-xs">{label}</span></div>
+              <div className="flex items-center gap-2 text-muted-foreground mb-1">
+                <Icon className="h-4 w-4" />
+                <span className="text-xs">{label}</span>
+              </div>
               <p className="font-semibold text-sm truncate">{value}</p>
             </CardContent>
           </Card>
@@ -108,16 +213,70 @@ export default function ContractDetailPage() {
 
       <Separator />
 
-      {/* Action Center */}
-      <ActionCenter
-        contractId={id}
-        onChainSteps={MOCK_ON_CHAIN_STEPS}
-        offChainSteps={offChainSteps.length > 0 ? offChainSteps : [
-          { id: 'demo1', stepKey: 'demo', title: 'No off-chain steps yet', plainEnglishTitle: 'No steps required', description: 'Off-chain steps will appear here once the contract state is set.', responsibility: 'buyer', isRequired: false, isBlocker: false, status: 'PENDING' },
-        ]}
-        onUpdateOffChainStep={handleUpdateStep}
-        currentUserRole="buyer"
-      />
+      {/* Tabs */}
+      <Tabs defaultValue="overview" className="space-y-4">
+        <TabsList className="w-full sm:w-auto">
+          <TabsTrigger value="overview">Overview</TabsTrigger>
+          <TabsTrigger value="timeline">Status &amp; History</TabsTrigger>
+          <TabsTrigger value="negotiate">Negotiate</TabsTrigger>
+        </TabsList>
+
+        {/* Overview Tab */}
+        <TabsContent value="overview" className="space-y-6">
+          <ActionCenter
+            contractId={id}
+            onChainSteps={MOCK_ON_CHAIN_STEPS}
+            offChainSteps={offChainSteps.length > 0 ? offChainSteps : [
+              {
+                id: 'demo1',
+                stepKey: 'demo',
+                title: 'No off-chain steps yet',
+                plainEnglishTitle: 'No steps required',
+                description: 'Off-chain steps will appear here once the contract state is set.',
+                responsibility: 'buyer',
+                isRequired: false,
+                isBlocker: false,
+                status: 'PENDING',
+              },
+            ]}
+            onUpdateOffChainStep={handleUpdateStep}
+            currentUserRole={CURRENT_USER_ROLE}
+          />
+        </TabsContent>
+
+        {/* Status & History Tab */}
+        <TabsContent value="timeline">
+          <div className="max-w-2xl space-y-4">
+            <div>
+              <h2 className="text-base font-semibold mb-1">Contract Lifecycle</h2>
+              <p className="text-sm text-muted-foreground">
+                A complete record of every stage and action on this agreement.
+              </p>
+            </div>
+            <StatusTimeline events={timelineEvents} contractId={id} />
+          </div>
+        </TabsContent>
+
+        {/* Negotiate Tab */}
+        <TabsContent value="negotiate">
+          <div className="max-w-3xl space-y-4">
+            <div>
+              <h2 className="text-base font-semibold mb-1">Negotiate Terms</h2>
+              <p className="text-sm text-muted-foreground">
+                Propose changes to the agreement. The other party will be notified and can accept, decline, or counter.
+              </p>
+            </div>
+            <AmendmentPanel
+              contractId={id}
+              amendments={amendments}
+              currentUserRole={CURRENT_USER_ROLE}
+              onAmendmentAction={handleAmendmentAction}
+              onProposeChanges={handleProposeChanges}
+              contractData={contractData}
+            />
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
