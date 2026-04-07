@@ -52,7 +52,9 @@
       "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed log --oneline -5)",
       "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed push origin main)",
       "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed fetch origin)",
-      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed log origin/main --oneline -5)"
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed log origin/main --oneline -5)",
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed add src/middleware.ts src/app/auth/login/page.tsx src/app/auth/signup/page.tsx package.json)",
+      "Bash(git -C:*)"
     ]
   }
 }
