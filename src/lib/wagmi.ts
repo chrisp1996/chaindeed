@@ -13,33 +13,37 @@ const polygon = {
   blockExplorers: { default: { name: 'PolygonScan', url: 'https://polygonscan.com' } },
 } as const;
 
-const polygonMumbai = {
-  id: 80001,
-  name: 'Polygon Mumbai',
-  nativeCurrency: { name: 'MATIC', symbol: 'MATIC', decimals: 18 },
+const polygonAmoy = {
+  id: 80002,
+  name: 'Polygon Amoy',
+  nativeCurrency: { name: 'POL', symbol: 'POL', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://rpc-mumbai.maticvigil.com'] },
-    public: { http: ['https://rpc-mumbai.maticvigil.com'] },
+    default: { http: ['https://rpc-amoy.polygon.technology'] },
+    public: { http: ['https://rpc-amoy.polygon.technology'] },
   },
-  blockExplorers: { default: { name: 'Mumbai PolygonScan', url: 'https://mumbai.polygonscan.com' } },
+  blockExplorers: { default: { name: 'Amoy PolygonScan', url: 'https://amoy.polygonscan.com' } },
   testnet: true,
 } as const;
 
-export { polygon, polygonMumbai };
+export { polygon, polygonAmoy };
+
+const connectors = [
+  metaMask(),
+  coinbaseWallet({ appName: 'ChainDeed', appLogoUrl: 'https://chaindeed.io/logo.png' }),
+  ...(process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID
+    ? [walletConnect({
+        projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID,
+        metadata: { name: 'ChainDeed', description: 'Digital Real Estate Agreements', url: 'https://chaindeed.io', icons: ['https://chaindeed.io/logo.png'] },
+      })]
+    : []),
+];
 
 export const wagmiConfig = createConfig({
-  chains: [polygon, polygonMumbai, mainnet],
-  connectors: [
-    metaMask(),
-    coinbaseWallet({ appName: 'ChainDeed', appLogoUrl: 'https://chaindeed.io/logo.png' }),
-    walletConnect({
-      projectId: process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID || 'demo_project_id',
-      metadata: { name: 'ChainDeed', description: 'Digital Real Estate Agreements', url: 'https://chaindeed.io', icons: ['https://chaindeed.io/logo.png'] },
-    }),
-  ],
+  chains: [polygon, polygonAmoy, mainnet],
+  connectors,
   transports: {
     [137]: http('https://polygon-rpc.com'),
-    [80001]: http('https://rpc-mumbai.maticvigil.com'),
+    [80002]: http('https://rpc-amoy.polygon.technology'),
     [1]: http(),
   },
 });

@@ -2,7 +2,6 @@
 
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ConnectButtonClient } from './ConnectButtonClient';
 import { Home, FileText, TrendingUp, Menu, X, Bell, User, LogOut, LogIn } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -58,7 +57,6 @@ export function Navbar() {
           <Button variant="ghost" size="icon" className="relative hidden md:flex">
             <Bell className="h-5 w-5" />
           </Button>
-          <ConnectButtonClient />
 
           {!loading && (
             user ? (
