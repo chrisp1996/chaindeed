@@ -58,16 +58,39 @@ export function buildInvitationEmail(
   contractType: string,
   assetDescription: string,
   appUrl: string,
+  titleCompanyName?: string,
+  titleCompanyEmail?: string,
 ): string {
   const typeLabel = contractType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
-  const loginUrl = `${appUrl}/auth/login?redirect=/contracts/${contractId}`;
+  const loginUrl  = `${appUrl}/auth/login?redirect=/contracts/${contractId}`;
   const signupUrl = `${appUrl}/auth/signup?redirect=/contracts/${contractId}`;
+
+  const titleCompanyWarning = (titleCompanyName && titleCompanyEmail)
+    ? `<div style="margin-top:24px;border:2px solid #f59e0b;border-radius:8px;padding:16px;background:#fffbeb">
+        <p style="margin:0 0 8px;font-weight:700;color:#92400e;font-size:14px">⚠️ Action Required: Title Company Designation</p>
+        <p style="margin:0 0 10px;font-size:13px;color:#78350f">
+          <strong>${senderName}</strong> has designated <strong>${titleCompanyName}</strong> (${titleCompanyEmail}) as the title company on this agreement.
+          This gives them authority to verify whether contract conditions — such as clear title and receipt of funds — are met or not met.
+          <strong>Their determination directly affects whether this smart contract executes and when money is released.</strong>
+        </p>
+        <ul style="margin:0 0 10px;padding-left:18px;font-size:13px;color:#78350f">
+          <li style="margin-bottom:4px">They can confirm title is clear of liens and encumbrances</li>
+          <li style="margin-bottom:4px">They can confirm buyer's funds have been received</li>
+          <li style="margin-bottom:4px">If they mark a required condition as not met, the contract cannot execute and funds will not be released</li>
+        </ul>
+        <p style="margin:0;font-size:13px;color:#92400e;font-weight:600">
+          You must log in and approve (or object to) this designation before the title company can take any action on this agreement.
+        </p>
+      </div>`
+    : '';
+
   return emailTemplate(
     `<h2 style="color:#0f172a">You've been invited to an agreement</h2>
     <p>Hi ${recipientName},</p>
     <p><strong>${senderName}</strong> has created a <strong>${typeLabel}</strong> on ChainDeed and listed you as a party. The agreement covers:</p>
     <p style="background:#f8fafc;border-left:3px solid #0ea5e9;padding:10px 14px;border-radius:4px;font-weight:600">${assetDescription}</p>
     <p>You'll need a ChainDeed account to view, negotiate, and sign the agreement. It only takes a minute to create one.</p>
+    ${titleCompanyWarning}
     <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
       <a href="${signupUrl}" style="display:inline-block;background:#0ea5e9;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600">Create Account & View Agreement</a>
       <a href="${loginUrl}" style="display:inline-block;background:white;color:#0ea5e9;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;border:1px solid #0ea5e9">Sign In</a>

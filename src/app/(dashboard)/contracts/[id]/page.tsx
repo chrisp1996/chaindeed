@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { formatCurrency, getContractStatusLabel, formatDate } from '@/lib/utils';
-import { FileText, Home, DollarSign, Calendar, Download } from 'lucide-react';
+import { FileText, Home, DollarSign, Calendar, Download, AlertTriangle, CheckCircle2, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { StatusTimeline, buildTimelineFromContract } from '@/components/contracts/StatusTimeline';
 import { AmendmentPanel, Amendment, Change } from '@/components/contracts/AmendmentPanel';
@@ -90,6 +90,22 @@ export default function ContractDetailPage() {
       body: JSON.stringify({ viewedBy: user?.email ?? 'unknown' }),
     }).catch(() => {});
   }, [id, fetchAmendments, fetchViews]);
+
+  const handleApproveTitleCompany = async () => {
+    const field = currentUserRole === 'buyer' ? 'buyerApprovedTitleCompany' : 'sellerApprovedTitleCompany';
+    const res = await fetch(`/api/contracts/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ [field]: true }),
+    });
+    if (res.ok) {
+      const updated = await res.json();
+      setContract(updated);
+      toast.success('Title company designation approved.');
+    } else {
+      toast.error('Failed to record approval. Please try again.');
+    }
+  };
 
   const handleUpdateStep = async (stepId: string, status: string) => {
     const res = await fetch(`/api/off-chain-steps/${stepId}`, {
@@ -220,6 +236,92 @@ export default function ContractDetailPage() {
           </Card>
         ))}
       </div>
+
+      {/* Title Company Approval Card — shown when a title company is designated */}
+      {contract.titleCompanyEmail && (() => {
+        const tcName     = contract.titleCompany ?? (contract.wizardData as any)?.titleCompanyName ?? 'Title Company';
+        const tcEmail    = contract.titleCompanyEmail;
+        const buyerOk    = contract.buyerApprovedTitleCompany;
+        const sellerOk   = contract.sellerApprovedTitleCompany;
+        const bothOk     = buyerOk && sellerOk;
+        const myApproval = currentUserRole === 'buyer' ? buyerOk : currentUserRole === 'seller' ? sellerOk : true;
+        const canApprove = (currentUserRole === 'buyer' || currentUserRole === 'seller') && !myApproval;
+
+        return (
+          <div className={`rounded-xl border-2 p-5 space-y-4 ${bothOk ? 'border-green-300 bg-green-50' : 'border-amber-400 bg-amber-50'}`}>
+            <div className="flex items-start gap-3">
+              {bothOk
+                ? <ShieldCheck className="h-6 w-6 text-green-600 shrink-0 mt-0.5" />
+                : <ShieldAlert className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />}
+              <div className="flex-1 min-w-0">
+                <p className={`font-bold text-sm ${bothOk ? 'text-green-900' : 'text-amber-900'}`}>
+                  {bothOk ? 'Title Company Approved by Both Parties' : 'Title Company Designation — Approval Required'}
+                </p>
+                <p className={`text-xs mt-0.5 ${bothOk ? 'text-green-700' : 'text-amber-700'}`}>
+                  <strong>{tcName}</strong> ({tcEmail})
+                </p>
+              </div>
+            </div>
+
+            {!bothOk && (
+              <div className="rounded-lg border border-amber-300 bg-white p-4 space-y-3">
+                <p className="text-xs font-semibold text-amber-900 uppercase tracking-wide">What this means for this agreement</p>
+                <ul className="space-y-2">
+                  {[
+                    { icon: '🔍', text: `${tcName} will verify whether title is clear of all liens and encumbrances.` },
+                    { icon: '💰', text: `${tcName} will confirm buyer's funds have been received before closing can proceed.` },
+                    { icon: '📋', text: `${tcName} will certify other required conditions on the closing checklist.` },
+                    { icon: '⛔', text: 'If they mark a required condition as not met, the smart contract cannot execute and funds will not be released until resolved.' },
+                    { icon: '✅', text: 'The title company cannot take any action on this agreement until both parties approve this designation.' },
+                  ].map(({ icon, text }, i) => (
+                    <li key={i} className="flex items-start gap-2 text-xs text-amber-800">
+                      <span className="shrink-0">{icon}</span>
+                      <span>{text}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Approval status per party */}
+            <div className="grid sm:grid-cols-2 gap-3">
+              {[
+                { label: 'Buyer', approved: buyerOk },
+                { label: 'Seller', approved: sellerOk },
+              ].map(({ label, approved }) => (
+                <div key={label} className={`flex items-center gap-2 rounded-lg border px-3 py-2 text-xs font-medium ${approved ? 'border-green-300 bg-green-50 text-green-800' : 'border-amber-300 bg-white text-amber-800'}`}>
+                  {approved
+                    ? <CheckCircle2 className="h-4 w-4 text-green-600 shrink-0" />
+                    : <AlertTriangle className="h-4 w-4 text-amber-500 shrink-0" />}
+                  <span>{label}: {approved ? 'Approved' : 'Approval pending'}</span>
+                </div>
+              ))}
+            </div>
+
+            {canApprove && (
+              <div className="space-y-2">
+                <p className="text-xs text-amber-800 font-medium">
+                  By approving, you acknowledge that <strong>{tcName}</strong> will have authority to verify conditions
+                  that determine whether this smart contract executes and when funds are released.
+                </p>
+                <button
+                  onClick={handleApproveTitleCompany}
+                  className="inline-flex items-center gap-2 rounded-lg bg-amber-600 hover:bg-amber-700 text-white text-sm font-semibold px-4 py-2 transition-colors"
+                >
+                  <CheckCircle2 className="h-4 w-4" />
+                  Approve Title Company Designation
+                </button>
+              </div>
+            )}
+
+            {bothOk && (
+              <p className="text-xs text-green-700">
+                Both parties have approved. {tcName} can now access their assigned checklist and verify conditions.
+              </p>
+            )}
+          </div>
+        );
+      })()}
 
       <Separator />
 

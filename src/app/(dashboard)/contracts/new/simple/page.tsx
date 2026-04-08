@@ -291,7 +291,7 @@ interface FormData {
   tenants: Tenant[];
   sellerName: string; sellerEmail: string;
   buyerName: string; buyerEmail: string;
-  titleCompanyName: string; titleCompanyEmail: string;
+  titleCompanyName: string; titleCompanyEmail: string; titleCompanyAcknowledged: boolean;
   price: string; earnestMoney: string;
   inspectionDays: string; closingDate: string;
   notes: string;
@@ -511,7 +511,7 @@ function SimpleTransactionWizard() {
     tenants: [],
     sellerName: '', sellerEmail: '',
     buyerName: '', buyerEmail: '',
-    titleCompanyName: '', titleCompanyEmail: '',
+    titleCompanyName: '', titleCompanyEmail: '', titleCompanyAcknowledged: false,
     price: '', earnestMoney: '',
     inspectionDays: initialType === 'residential_real_estate' ? '10' : initialType === 'commercial_real_estate' ? '30' : '',
     closingDate: '', notes: '',
@@ -737,20 +737,60 @@ function SimpleTransactionWizard() {
                 </div>
               </div>
               {isRealEstate && (
-                <div className="border-t pt-4">
-                  <div className="flex items-center justify-between mb-3">
+                <div className="border-t pt-4 space-y-4">
+                  <div className="flex items-center justify-between">
                     <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Title Company</p>
                     <span className="text-xs bg-sky-100 text-sky-700 border border-sky-200 rounded px-2 py-0.5">Recommended</span>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-3">The title company verifies title is clear, confirms funding, and coordinates closing. They'll receive a dedicated checklist of their required steps.</p>
+                  <p className="text-xs text-muted-foreground">The title company coordinates closing, verifies clear title, and confirms funding. Designating one is optional but strongly recommended for real estate transactions.</p>
                   <div className="grid sm:grid-cols-2 gap-4">
                     <FieldWithHelp label="Title company name" helpText="Name of the title/escrow company" htmlFor="titleCompanyName">
                       <Input id="titleCompanyName" placeholder="Acme Title & Escrow" value={data.titleCompanyName} onChange={e => update('titleCompanyName', e.target.value)} />
                     </FieldWithHelp>
-                    <FieldWithHelp label="Title company email" helpText="They'll receive their steps and can mark conditions as met" htmlFor="titleCompanyEmail">
+                    <FieldWithHelp label="Title company email" helpText="They'll receive their assigned checklist and can mark conditions as met" htmlFor="titleCompanyEmail">
                       <Input id="titleCompanyEmail" type="email" placeholder="closer@acmetitle.com" value={data.titleCompanyEmail} onChange={e => update('titleCompanyEmail', e.target.value)} />
                     </FieldWithHelp>
                   </div>
+
+                  {/* Warning shown only when an email has been entered */}
+                  {data.titleCompanyEmail && (
+                    <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 space-y-3">
+                      <div className="flex items-start gap-2">
+                        <span className="text-amber-600 text-lg leading-none">⚠️</span>
+                        <div>
+                          <p className="text-sm font-bold text-amber-900">Important: Title Company Authority Over Contract Execution</p>
+                          <p className="text-xs text-amber-800 mt-1 leading-relaxed">
+                            By designating a title company, you are granting them the authority to verify whether key contract conditions are met or not met. Their determinations directly affect whether this smart contract executes and when funds are released.
+                          </p>
+                        </div>
+                      </div>
+                      <ul className="space-y-1.5 pl-2">
+                        {[
+                          { icon: '🔍', text: 'They will confirm whether title is clear of liens and encumbrances.' },
+                          { icon: '💰', text: 'They will confirm whether buyer\'s funds have been received before closing.' },
+                          { icon: '📋', text: 'They will verify and certify other assigned conditions on the checklist.' },
+                          { icon: '⛔', text: 'If they mark a required condition as not met, the smart contract cannot execute and funds will not be released until resolved.' },
+                          { icon: '✅', text: 'Both you and the other party must separately approve this designation before the title company can act.' },
+                        ].map(({ icon, text }, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-amber-800">
+                            <span className="shrink-0">{icon}</span>
+                            <span>{text}</span>
+                          </li>
+                        ))}
+                      </ul>
+                      <div className="flex items-start gap-3 rounded-md bg-white border border-amber-300 p-3">
+                        <Checkbox
+                          id="titleCompanyAcknowledged"
+                          checked={data.titleCompanyAcknowledged}
+                          onCheckedChange={v => update('titleCompanyAcknowledged', Boolean(v))}
+                          className="mt-0.5"
+                        />
+                        <Label htmlFor="titleCompanyAcknowledged" className="text-xs leading-relaxed cursor-pointer text-amber-900">
+                          I understand that the designated title company will have authority to verify contract conditions, and that their decisions affect whether the smart contract executes and when money is released. Both parties will be notified and asked to approve this designation.
+                        </Label>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
@@ -953,7 +993,13 @@ function SimpleTransactionWizard() {
             <ArrowLeft className="h-4 w-4 mr-2" />Back
           </Button>
           {step < confirmStep && (
-            <Button onClick={() => setStep(s => s + 1)} disabled={step === 1 && !data.assetTypeKey}>
+            <Button
+              onClick={() => setStep(s => s + 1)}
+              disabled={
+                (step === 1 && !data.assetTypeKey) ||
+                (step === partiesStep && isRealEstate && !!data.titleCompanyEmail && !data.titleCompanyAcknowledged)
+              }
+            >
               Continue <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
           )}

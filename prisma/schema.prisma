@@ -185,9 +185,11 @@ model Contract {
   buyerId             String?
   sellerId            String?
   agentId             String?
-  titleCompany        String?
-  titleCompanyEmail   String?
-  arbiterAddress      String?
+  titleCompany                  String?
+  titleCompanyEmail             String?
+  buyerApprovedTitleCompany     Boolean  @default(false)
+  sellerApprovedTitleCompany    Boolean  @default(false)
+  arbiterAddress                String?
 
   // Property
   propertyId          String?

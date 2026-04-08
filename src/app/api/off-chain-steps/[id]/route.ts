@@ -14,12 +14,19 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
-    // Load the step and its contract to check role
+    // Load the step and its contract to check role and approval status
     const step = await prisma.offChainStep.findUnique({
       where: { id: params.id },
       include: {
         contract: {
-          select: { buyerId: true, sellerId: true, agentId: true, titleCompanyEmail: true },
+          select: {
+            buyerId: true,
+            sellerId: true,
+            agentId: true,
+            titleCompanyEmail: true,
+            buyerApprovedTitleCompany: true,
+            sellerApprovedTitleCompany: true,
+          },
         },
       },
     });
@@ -59,6 +66,21 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
         { error: `This step is assigned to ${resp}. You are logged in as ${userRole}.` },
         { status: 403 }
       );
+    }
+
+    // Title company cannot act until both parties have approved their designation
+    if (userRole === 'title_company') {
+      const bothApproved = contract.buyerApprovedTitleCompany && contract.sellerApprovedTitleCompany;
+      if (!bothApproved) {
+        const pending = [
+          !contract.buyerApprovedTitleCompany  && 'buyer',
+          !contract.sellerApprovedTitleCompany && 'seller',
+        ].filter(Boolean).join(' and ');
+        return NextResponse.json(
+          { error: `Your designation as title company has not yet been approved by all parties. Waiting on: ${pending}.` },
+          { status: 403 }
+        );
+      }
     }
 
     const data: Record<string, unknown> = { status };

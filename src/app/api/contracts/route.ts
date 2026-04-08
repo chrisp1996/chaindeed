@@ -91,6 +91,8 @@ export async function POST(req: NextRequest) {
         type as string,
         assetDescription,
         appUrl,
+        wd.titleCompanyName as string | undefined,
+        wd.titleCompanyEmail as string | undefined,
       );
       sendEmail(
         counterpartyEmail,
