@@ -19,6 +19,7 @@ import { Progress } from '@/components/ui/progress';
 import { Navbar } from '@/components/layout/Navbar';
 import { useAuth } from '@/lib/useAuth';
 import { useAccount } from 'wagmi';
+import { WalletManager } from '@/components/account/WalletManager';
 import { formatCurrency, getContractStatusLabel, formatDate } from '@/lib/utils';
 import { toast } from 'sonner';
 
@@ -35,7 +36,7 @@ const STATUS_ICON: Record<string, any> = {
 
 export default function AccountPage() {
   const router = useRouter();
-  const { user, loading, logout, updateProfile } = useAuth();
+  const { user, loading, logout, updateProfile, refetch } = useAuth();
   const { address: connectedWallet } = useAccount();
 
   const [contracts, setContracts] = useState<any[]>([]);
@@ -310,82 +311,14 @@ export default function AccountPage() {
           </TabsContent>
 
           {/* ─── WALLETS TAB ─── */}
-          <TabsContent value="wallets" className="space-y-6 mt-6">
-            <h2 className="text-xl font-semibold">Connected Wallets</h2>
-            <p className="text-sm text-muted-foreground">Your wallet is your secure digital identity for signing agreements and holding funds. You can link your connected wallet to your account here.</p>
-
-            {/* Primary wallet */}
-            <Card>
-              <CardHeader><CardTitle className="text-base">Primary Wallet</CardTitle></CardHeader>
-              <CardContent className="space-y-4">
-                {user.walletAddress ? (
-                  <div className="flex items-center justify-between gap-3 p-3 rounded-lg bg-green-50 border border-green-200">
-                    <div className="flex items-center gap-3">
-                      <div className="flex h-9 w-9 items-center justify-center rounded-full bg-green-100">
-                        <CheckCircle2 className="h-5 w-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-mono text-sm font-medium">
-                          {user.walletAddress.slice(0, 6)}...{user.walletAddress.slice(-4)}
-                        </p>
-                        <p className="text-xs text-muted-foreground">Primary wallet · Polygon network</p>
-                      </div>
-                    </div>
-                    <div className="flex gap-1">
-                      <Button size="icon" variant="ghost" className="h-8 w-8" onClick={() => copyToClipboard(user.walletAddress!)}>
-                        <Copy className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button size="icon" variant="ghost" className="h-8 w-8" asChild>
-                        <a href={`https://polygonscan.com/address/${user.walletAddress}`} target="_blank" rel="noreferrer">
-                          <ExternalLink className="h-3.5 w-3.5" />
-                        </a>
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3 p-3 rounded-lg bg-amber-50 border border-amber-200">
-                      <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
-                      <p className="text-sm text-amber-800">No wallet linked to your account yet. Connect a wallet using the button in the navigation bar, then link it below.</p>
-                    </div>
-                    {connectedWallet && (
-                      <div className="flex items-center justify-between p-3 rounded-lg border">
-                        <div>
-                          <p className="text-sm font-medium">Wallet connected (not yet linked)</p>
-                          <p className="font-mono text-xs text-muted-foreground">{connectedWallet.slice(0, 6)}...{connectedWallet.slice(-4)}</p>
-                        </div>
-                        <Button size="sm" onClick={handleLinkWallet}>Link to Account</Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* What your wallet does */}
-            <Card>
-              <CardHeader><CardTitle className="text-base">What your wallet is used for</CardTitle></CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {[
-                    { icon: Shield, title: 'Sign agreements', desc: 'Your wallet signature is your legally-binding digital signature on contracts.' },
-                    { icon: DollarSign, title: 'Hold earnest money', desc: 'Funds deposited into escrow are held in your wallet-linked smart contract.' },
-                    { icon: Home, title: 'Receive deeds', desc: 'When a transaction closes, the digital deed NFT is sent to your wallet.' },
-                    { icon: TrendingUp, title: 'Investment shares', desc: 'Fractional property shares are tokens held in your wallet.' },
-                  ].map(({ icon: Icon, title, desc }) => (
-                    <div key={title} className="flex items-start gap-3">
-                      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10 shrink-0">
-                        <Icon className="h-4 w-4 text-primary" />
-                      </div>
-                      <div>
-                        <p className="text-sm font-medium">{title}</p>
-                        <p className="text-xs text-muted-foreground">{desc}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="wallets" className="mt-6">
+            <WalletManager
+              user={user}
+              onWalletsUpdated={(_primary, _additional) => {
+                // Re-fetch current user to update the UI without full reload
+                refetch();
+              }}
+            />
           </TabsContent>
 
           {/* ─── PROFILE TAB ─── */}
