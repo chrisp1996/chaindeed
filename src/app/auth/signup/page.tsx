@@ -20,7 +20,7 @@ const ROLES = [
 function SignUpForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/account';
+  const redirect = searchParams.get('redirect') || '/dashboard';
   const { signup } = useAuth();
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -43,7 +43,8 @@ function SignUpForm() {
       return;
     }
     toast.success('Account created! Welcome to ChainDeed.');
-    router.push(redirect);
+    setLoading(false);
+    router.replace(redirect);
   }
 
   return (

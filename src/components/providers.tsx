@@ -6,6 +6,7 @@ import { RainbowKitProvider, lightTheme } from '@rainbow-me/rainbowkit';
 import '@rainbow-me/rainbowkit/styles.css';
 import { useState } from 'react';
 import { wagmiConfig } from '@/lib/wagmi';
+import { AuthProvider } from '@/lib/AuthContext';
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient({
@@ -27,7 +28,12 @@ export function Providers({ children }: { children: React.ReactNode }) {
             learnMoreUrl: 'https://learn.rainbow.me/understanding-web3',
           }}
         >
-          {children}
+          {/* AuthProvider wraps everything so every useAuth() call reads
+              the same shared state — one /api/auth/me fetch per app load,
+              not one per component mount. */}
+          <AuthProvider>
+            {children}
+          </AuthProvider>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>

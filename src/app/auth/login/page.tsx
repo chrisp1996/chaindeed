@@ -14,7 +14,7 @@ import { toast } from 'sonner';
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const redirect = searchParams.get('redirect') || '/account';
+  const redirect = searchParams.get('redirect') || '/dashboard';
   const { login } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -31,7 +31,8 @@ function LoginForm() {
       return;
     }
     toast.success('Welcome back!');
-    router.push(redirect);
+    setLoading(false);
+    router.replace(redirect);
   }
 
   return (
