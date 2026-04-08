@@ -76,7 +76,13 @@
       "Bash(cat \"/Users/christopherpierson/Downloads/ChainDeed/src/app/\\(dashboard\\)/contracts/[id]/page.tsx\")",
       "Bash(grep -E \"\\\\.\\(sol|ts|tsx\\)$\")",
       "Bash(ls -la /Users/christopherpierson/Downloads/ChainDeed/contracts/*.sol)",
-      "Bash(cat \"/Users/christopherpierson/Downloads/ChainDeed/src/app/\\(dashboard\\)/contracts/new/simple/page.tsx\")"
+      "Bash(cat \"/Users/christopherpierson/Downloads/ChainDeed/src/app/\\(dashboard\\)/contracts/new/simple/page.tsx\")",
+      "Bash(~/.npm-global/bin/npm run:*)",
+      "Bash(npx --yes next build)",
+      "Bash(ls /usr/local/bin/node*)",
+      "Bash(ls ~/.nvm/versions/node/*/bin/npm)",
+      "Bash(~/.nvm/versions/node/v20.20.2/bin/node --version)",
+      "Bash(export PATH=\"$HOME/.nvm/versions/node/v20.20.2/bin:$PATH\")"
     ]
   }
 }
