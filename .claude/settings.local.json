@@ -82,7 +82,14 @@
       "Bash(ls /usr/local/bin/node*)",
       "Bash(ls ~/.nvm/versions/node/*/bin/npm)",
       "Bash(~/.nvm/versions/node/v20.20.2/bin/node --version)",
-      "Bash(export PATH=\"$HOME/.nvm/versions/node/v20.20.2/bin:$PATH\")"
+      "Bash(export PATH=\"$HOME/.nvm/versions/node/v20.20.2/bin:$PATH\")",
+      "Bash(find /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts -type f -name *.ts)",
+      "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/revisions/[revId])",
+      "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/comments/[commentId])",
+      "Bash(mkdir -p /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/document)",
+      "Bash(node -e \"const t = require\\(''@tiptap/extension-text-style''\\); console.log\\(Object.keys\\(t\\)\\)\")",
+      "Bash(node -e \"const t = require\\(''@tiptap/react''\\); console.log\\(Object.keys\\(t\\).filter\\(k => k.toLowerCase\\(\\).includes\\(''bubble''\\) || k.toLowerCase\\(\\).includes\\(''menu''\\)\\)\\)\")",
+      "Bash(Revision\" which creates a ContractRevision record; the other party sees an:*)"
     ]
   }
 }
