@@ -54,7 +54,11 @@
       "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed fetch origin)",
       "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed log origin/main --oneline -5)",
       "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed add src/middleware.ts src/app/auth/login/page.tsx src/app/auth/signup/page.tsx package.json)",
-      "Bash(git -C:*)"
+      "Bash(git -C:*)",
+      "Bash(cat /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/invest/page.tsx)",
+      "Bash(cat /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/route.ts)",
+      "Bash(wc -l /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/invest/[id]/page.tsx)",
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed add src/components/pdf/ExecutedContractPDF.tsx src/lib/notifications.ts src/app/api/contracts/route.ts src/app/api/contracts/[id]/route.ts src/app/\\\\\\(dashboard\\\\\\)/invest/page.tsx src/app/\\\\\\(dashboard\\\\\\)/invest/[id]/page.tsx)"
     ]
   }
 }
