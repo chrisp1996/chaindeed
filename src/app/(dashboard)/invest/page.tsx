@@ -107,13 +107,14 @@ export default function InvestPage() {
         {filtered.map(listing => {
           const pct = Math.round((listing.raisedAmount / listing.targetRaise) * 100);
           return (
-            <Card key={listing.id} className={listing.status === 'FUNDED' ? 'opacity-75' : 'hover:border-primary/50 hover:shadow-sm transition-all'}>
+            <Link key={listing.id} href={`/invest/${listing.id}`} className="block">
+            <Card className={listing.status === 'FUNDED' ? 'opacity-75' : 'hover:border-primary/50 hover:shadow-sm transition-all cursor-pointer'}>
               <CardContent className="pt-5 pb-5">
                 <div className="flex flex-col sm:flex-row sm:items-start gap-4">
                   <div className="flex-1 min-w-0 space-y-3">
                     <div>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <h3 className="font-semibold">{listing.address}</h3>
+                        <h3 className="font-semibold hover:text-primary transition-colors">{listing.address}</h3>
                         <Badge variant={listing.status === 'FUNDED' ? 'success' : 'info'}>{listing.status === 'FUNDED' ? 'Fully Funded' : 'Open for Investment'}</Badge>
                         {listing.accreditedOnly && <Badge variant="outline" className="text-xs">Accredited only</Badge>}
                       </div>
@@ -154,7 +155,7 @@ export default function InvestPage() {
                   <div className="sm:w-36 flex-shrink-0">
                     {listing.status === 'ACTIVE' ? (
                       <Button className="w-full" asChild>
-                        <Link href={`/invest/${listing.id}`}>Invest <ArrowRight className="h-4 w-4" /></Link>
+                        <span>View & Invest <ArrowRight className="h-4 w-4" /></span>
                       </Button>
                     ) : (
                       <Button className="w-full" variant="outline" disabled>Fully Funded</Button>
@@ -164,6 +165,7 @@ export default function InvestPage() {
                 </div>
               </CardContent>
             </Card>
+            </Link>
           );
         })}
       </div>
