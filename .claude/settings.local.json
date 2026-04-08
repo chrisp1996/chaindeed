@@ -58,7 +58,21 @@
       "Bash(cat /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/invest/page.tsx)",
       "Bash(cat /Users/christopherpierson/Downloads/ChainDeed/src/app/api/contracts/[id]/route.ts)",
       "Bash(wc -l /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/invest/[id]/page.tsx)",
-      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed add src/components/pdf/ExecutedContractPDF.tsx src/lib/notifications.ts src/app/api/contracts/route.ts src/app/api/contracts/[id]/route.ts src/app/\\\\\\(dashboard\\\\\\)/invest/page.tsx src/app/\\\\\\(dashboard\\\\\\)/invest/[id]/page.tsx)"
+      "Bash(git -C /Users/christopherpierson/Downloads/ChainDeed add src/components/pdf/ExecutedContractPDF.tsx src/lib/notifications.ts src/app/api/contracts/route.ts src/app/api/contracts/[id]/route.ts src/app/\\\\\\(dashboard\\\\\\)/invest/page.tsx src/app/\\\\\\(dashboard\\\\\\)/invest/[id]/page.tsx)",
+      "Bash(ls /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/contracts/new/)",
+      "Bash(wc -l /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/contracts/new/simple/page.tsx /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/contracts/new/real-estate/page.tsx /Users/christopherpierson/Downloads/ChainDeed/src/app/\\\\\\(dashboard\\\\\\)/contracts/new/page.tsx)",
+      "Bash(export PATH=\"/usr/local/bin:/opt/homebrew/bin:$PATH\")",
+      "Bash(ls /usr/local/bin/node* /opt/homebrew/bin/node* ~/.nvm/versions/node/*/bin/npm)",
+      "Bash(command -v node)",
+      "Read(//Users/christopherpierson/.nvm/**)",
+      "Read(//Users/christopherpierson/Library/**)",
+      "Bash(~/.nvm/versions/node/v20.20.2/bin/npm run:*)",
+      "Bash(~/.nvm/versions/node/v20.20.2/bin/node ~/.nvm/versions/node/v20.20.2/bin/npm run build)",
+      "Bash(/Users/christopherpierson/.nvm/versions/node/v20.20.2/bin/node /Users/christopherpierson/.nvm/versions/node/v20.20.2/bin/npm run build)",
+      "Bash(sudo ln:*)",
+      "Bash(ln -sf /Users/christopherpierson/.nvm/versions/node/v20.20.2/bin/node /Users/christopherpierson/.local/bin/node)",
+      "Bash(mkdir -p /Users/christopherpierson/.local/bin)",
+      "Bash(export PATH=\"/Users/christopherpierson/.nvm/versions/node/v20.20.2/bin:$PATH\")"
     ]
   }
 }
