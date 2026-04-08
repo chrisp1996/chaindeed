@@ -1,29 +1,39 @@
 import Link from 'next/link';
-import { Home, FileText, TrendingUp, ArrowRight, ChevronRight } from 'lucide-react';
+import { Home, Building2, FileText, TrendingUp, ChevronRight } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
 const options = [
   {
-    href: '/contracts/new/real-estate',
+    href: '/contracts/new/simple?type=residential',
     icon: Home,
-    title: 'Buy or Sell a Home',
-    description: 'Full real estate purchase agreement with state-required disclosures, earnest money escrow, and step-by-step closing guidance.',
+    title: 'Residential Real Estate',
+    description: 'Buy or sell a home, condo, townhouse, or residential land. Includes state-required disclosures, earnest money escrow, inspection period, and step-by-step closing guidance.',
     badge: 'Ohio · Kentucky · Indiana',
     badgeVariant: 'info' as const,
-    time: '~15 min to set up',
-    features: ['Earnest money in secure hold', 'State disclosures auto-applied', 'Off-chain step checklist', 'Dual-track progress tracker'],
+    time: '~15 min',
+    features: ['Earnest money in secure escrow', 'State disclosures auto-applied', 'Inspection contingency', 'Off-chain closing checklist'],
     recommended: true,
+  },
+  {
+    href: '/contracts/new/simple?type=commercial',
+    icon: Building2,
+    title: 'Commercial Real Estate',
+    description: 'Purchase, sale, or transfer of commercial property — office, retail, industrial, or mixed-use. Includes tenant/lease details, NOI, cap rate, and commercial due diligence terms.',
+    badge: 'All states',
+    badgeVariant: 'secondary' as const,
+    time: '~20 min',
+    features: ['Tenant & lease schedule', 'NOI / cap rate disclosure', 'Environmental contingency', 'Commercial due diligence period'],
   },
   {
     href: '/contracts/new/simple',
     icon: FileText,
-    title: 'Simple Agreement',
-    description: 'For selling a car, business asset, equipment, or any item where you want both parties protected and funds held securely.',
+    title: 'Other Asset Sale',
+    description: 'For vehicles, businesses, equipment, personal property, intellectual property, or any other asset where you want both parties protected and funds held securely.',
     badge: 'Any state · Any asset',
     badgeVariant: 'secondary' as const,
-    time: '~5 min to set up',
-    features: ['Secure payment hold', 'Both parties confirm', 'Automatic refund if deadline passes'],
+    time: '~5 min',
+    features: ['Secure payment hold', 'Both parties confirm', 'Auto-refund if deadline passes'],
   },
   {
     href: '/contracts/new/tokenize',
@@ -32,7 +42,7 @@ const options = [
     description: 'List a property for fractional investment. Set share price, investor requirements, and manage your property DAO.',
     badge: 'Accredited investors',
     badgeVariant: 'pending' as const,
-    time: '~20 min to set up',
+    time: '~20 min',
     features: ['Fractional ownership shares', 'Rental income distribution', 'Investor voting (DAO)', 'KYC verification'],
   },
 ];
@@ -67,7 +77,7 @@ export default function NewContractPage() {
                         </li>
                       ))}
                     </ul>
-                    <p className="text-xs text-muted-foreground mt-2">{time}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{time} to set up</p>
                   </div>
                   <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0 mt-1" />
                 </div>
