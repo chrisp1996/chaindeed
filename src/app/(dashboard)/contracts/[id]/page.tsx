@@ -15,6 +15,8 @@ import { toast } from 'sonner';
 import { StatusTimeline, buildTimelineFromContract } from '@/components/contracts/StatusTimeline';
 import { NegotiationPanel, Amendment, Change } from '@/components/contracts/NegotiationPanel';
 import { ContractDocument } from '@/components/contracts/ContractDocument';
+import { ContractEditor } from '@/components/contracts/editor/ContractEditor';
+import { generateContractHtml } from '@/lib/generateContractHtml';
 
 // Mock on-chain steps — in production, read from deployed contract events
 const MOCK_ON_CHAIN_STEPS: OnChainStep[] = [
@@ -365,16 +367,43 @@ export default function ContractDetailPage() {
           />
         </TabsContent>
 
-        {/* Contract Document Tab */}
+        {/* Contract Document Tab — live editable redline editor */}
         <TabsContent value="contract">
           <div className="space-y-4">
-            <div>
-              <h2 className="text-base font-semibold mb-1">Agreement Document</h2>
-              <p className="text-sm text-muted-foreground">
-                The full legal agreement as it currently stands. Any proposed changes from the Negotiate tab are highlighted inline in real time.
-              </p>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <h2 className="text-base font-semibold mb-1">Agreement Document</h2>
+                <p className="text-sm text-muted-foreground max-w-2xl">
+                  Edit this document directly. Use <strong>Propose Revision</strong> to send your
+                  changes to the other party for review. Changes are highlighted in green (added)
+                  and red (removed). Both parties must accept the same version before signing.
+                </p>
+              </div>
             </div>
-            <ContractDocument contract={contract} pendingChanges={pendingChanges} />
+
+            {/* Show the rich editor when the contract is in a negotiable state */}
+            {['DRAFT', 'PENDING_SIGNATURES', 'ACTIVE'].includes(contract.status) ? (
+              <ContractEditor
+                contractId={id}
+                initialHtml={
+                  contract.documentHtml ??
+                  generateContractHtml(contract)
+                }
+                currentUserRole={currentUserRole === 'seller' ? 'seller' : 'buyer'}
+                currentUserName={user?.name ?? user?.email}
+                readOnly={currentUserRole === 'title_company' || currentUserRole === 'agent'}
+                onSaved={() => {
+                  // Re-fetch contract to pick up documentHtml updates
+                  fetch(`/api/contracts/${id}`)
+                    .then(r => r.json())
+                    .then(data => setContract(data))
+                    .catch(() => {});
+                }}
+              />
+            ) : (
+              /* Read-only formatted view for closed / cancelled contracts */
+              <ContractDocument contract={contract} pendingChanges={pendingChanges} />
+            )}
           </div>
         </TabsContent>
 

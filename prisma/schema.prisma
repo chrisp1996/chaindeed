@@ -232,6 +232,9 @@ model Contract {
   wizardStep          Int     @default(1)
   wizardData          Json?
 
+  // Live negotiation document (editable HTML, versioned via ContractRevision)
+  documentHtml        String? @db.Text
+
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 
@@ -247,6 +250,8 @@ model Contract {
   signatures          ContractSignature[]
   amendments          ContractAmendment[]
   views               ContractView[]
+  revisions           ContractRevision[]
+  contractComments    ContractComment[]
 }
 
 model ContractSignature {
@@ -495,4 +500,44 @@ model ContractView {
   viewedBy   String   // 'buyer' | 'seller' | email
   viewedAt   DateTime @default(now())
   ipAddress  String?
+}
+
+// ─── Document Revision (redline / track-changes rounds) ──────────────────────
+
+model ContractRevision {
+  id           String    @id @default(cuid())
+  contractId   String
+  contract     Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  version      Int
+  baseHtml     String    @db.Text    // clean document before this round
+  proposedHtml String    @db.Text    // edited document proposed by author
+  authorRole   String                // 'buyer' | 'seller'
+  authorId     String?
+  authorName   String?
+  status       String    @default("PENDING")   // PENDING | ACCEPTED | DECLINED | SUPERSEDED
+  message      String?               // cover note from proposing party
+  createdAt    DateTime  @default(now())
+  respondedAt  DateTime?
+  respondedBy  String?
+
+  comments     ContractComment[]
+}
+
+// ─── Inline Comments ─────────────────────────────────────────────────────────
+
+model ContractComment {
+  id          String    @id @default(cuid())
+  contractId  String
+  contract    Contract  @relation(fields: [contractId], references: [id], onDelete: Cascade)
+  revisionId  String?
+  revision    ContractRevision? @relation(fields: [revisionId], references: [id])
+  authorRole  String
+  authorId    String?
+  authorName  String?
+  anchorText  String?   // quoted text the comment is anchored to
+  text        String
+  resolved    Boolean   @default(false)
+  resolvedAt  DateTime?
+  resolvedBy  String?
+  createdAt   DateTime  @default(now())
 }

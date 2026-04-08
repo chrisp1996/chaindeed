@@ -1,0 +1,209 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import { ArrowLeft, CheckCircle2, XCircle, Clock, User, ChevronDown, ChevronUp } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
+import { htmlDiff } from '@/lib/htmlDiff';
+
+export interface Revision {
+  id: string;
+  version: number;
+  baseHtml: string;
+  proposedHtml: string;
+  authorRole: string;
+  authorName?: string;
+  status: string;
+  message?: string;
+  createdAt: string;
+  respondedAt?: string;
+  respondedBy?: string;
+}
+
+interface Props {
+  revision: Revision;
+  currentUserRole: 'buyer' | 'seller';
+  isMyTurnToRespond: boolean;
+  onAccept: () => Promise<void> | void;
+  onDecline: () => Promise<void> | void;
+  onBack: () => void;
+}
+
+const STATUS_STYLES: Record<string, string> = {
+  PENDING:    'bg-amber-100 text-amber-800 border-amber-300',
+  ACCEPTED:   'bg-green-100 text-green-800 border-green-300',
+  DECLINED:   'bg-red-100 text-red-800 border-red-300',
+  SUPERSEDED: 'bg-gray-100 text-gray-500 border-gray-300',
+};
+
+function fmt(d: string) {
+  return new Date(d).toLocaleString('en-US', {
+    month: 'short', day: 'numeric', year: 'numeric',
+    hour: 'numeric', minute: '2-digit',
+  });
+}
+
+export function RevisionDiffViewer({
+  revision,
+  currentUserRole,
+  isMyTurnToRespond,
+  onAccept,
+  onDecline,
+  onBack,
+}: Props) {
+  const [accepting, setAccepting]   = useState(false);
+  const [declining, setDeclining]   = useState(false);
+  const [showBase,  setShowBase]    = useState(false);
+
+  const diffHtml = useMemo(
+    () => htmlDiff(revision.baseHtml, revision.proposedHtml),
+    [revision.baseHtml, revision.proposedHtml]
+  );
+
+  async function handleAccept() {
+    setAccepting(true);
+    try { await onAccept(); } finally { setAccepting(false); }
+  }
+  async function handleDecline() {
+    setDeclining(true);
+    try { await onDecline(); } finally { setDeclining(false); }
+  }
+
+  return (
+    <div className="flex flex-col flex-1 min-h-0">
+      {/* ── header ── */}
+      <div className="px-4 py-3 border-b bg-gray-50 space-y-2 shrink-0">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={onBack}
+            className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to document
+          </button>
+          <span className={cn('text-xs font-semibold px-2 py-0.5 rounded-full border', STATUS_STYLES[revision.status] ?? 'bg-gray-100')}>
+            {revision.status}
+          </span>
+        </div>
+
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-1.5 text-sm">
+            <User className="h-4 w-4 text-muted-foreground" />
+            <strong>{revision.authorName ?? revision.authorRole}</strong>
+            <span className="text-muted-foreground">proposed revision v{revision.version}</span>
+          </div>
+          <span className="text-xs text-muted-foreground">{fmt(revision.createdAt)}</span>
+          {revision.respondedAt && (
+            <span className="text-xs text-muted-foreground">
+              · Responded {fmt(revision.respondedAt)} by {revision.respondedBy}
+            </span>
+          )}
+        </div>
+
+        {revision.message && (
+          <div className="rounded-md border bg-white px-3 py-2 text-sm text-gray-700">
+            <span className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wide block mb-0.5">
+              Cover note
+            </span>
+            {revision.message}
+          </div>
+        )}
+
+        {/* legend */}
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-8 rounded" style={{ background: '#dcfce7', border: '1px solid #86efac' }} />
+            Added
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-3 w-8 rounded" style={{ background: '#fee2e2', border: '1px solid #fca5a5' }} />
+            Removed
+          </span>
+          <button
+            onClick={() => setShowBase(s => !s)}
+            className="ml-auto flex items-center gap-1 hover:text-foreground transition-colors"
+          >
+            {showBase ? <><ChevronUp className="h-3 w-3" />Hide original</> : <><ChevronDown className="h-3 w-3" />Show original</>}
+          </button>
+        </div>
+      </div>
+
+      {/* ── content ── */}
+      <div className="flex flex-1 overflow-hidden">
+        {/* diff pane */}
+        <div
+          className={cn('overflow-auto p-8 flex-1', showBase && 'border-r')}
+          style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}
+        >
+          <div
+            className="prose prose-sm max-w-none leading-relaxed"
+            // Safe: content is generated by our own diff engine from TipTap output;
+            // no user-controlled raw HTML is injected without sanitisation.
+            dangerouslySetInnerHTML={{ __html: diffHtml }}
+          />
+        </div>
+
+        {/* original pane (optional) */}
+        {showBase && (
+          <div className="overflow-auto p-8 flex-1 bg-gray-50" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+            <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-4">
+              Original (before this revision)
+            </p>
+            <div
+              className="prose prose-sm max-w-none leading-relaxed"
+              dangerouslySetInnerHTML={{ __html: revision.baseHtml }}
+            />
+          </div>
+        )}
+      </div>
+
+      {/* ── action bar ── */}
+      {revision.status === 'PENDING' && isMyTurnToRespond && (
+        <div className="px-4 py-3 border-t bg-amber-50 flex items-center gap-3 shrink-0">
+          <p className="text-sm font-medium text-amber-900 flex-1">
+            Do you accept these proposed changes to the document?
+          </p>
+          <Button
+            variant="outline"
+            size="sm"
+            className="border-red-300 text-red-700 hover:bg-red-50"
+            onClick={handleDecline}
+            disabled={declining || accepting}
+          >
+            <XCircle className="h-4 w-4 mr-1.5" />
+            {declining ? 'Declining…' : 'Decline & Counter'}
+          </Button>
+          <Button
+            size="sm"
+            className="bg-green-600 hover:bg-green-700 text-white"
+            onClick={handleAccept}
+            disabled={accepting || declining}
+          >
+            <CheckCircle2 className="h-4 w-4 mr-1.5" />
+            {accepting ? 'Accepting…' : 'Accept Changes'}
+          </Button>
+        </div>
+      )}
+
+      {revision.status === 'PENDING' && !isMyTurnToRespond && (
+        <div className="px-4 py-3 border-t bg-blue-50 flex items-center gap-2 text-sm text-blue-700 shrink-0">
+          <Clock className="h-4 w-4 shrink-0" />
+          Waiting for the other party to review and respond to your changes.
+        </div>
+      )}
+
+      {revision.status === 'ACCEPTED' && (
+        <div className="px-4 py-3 border-t bg-green-50 flex items-center gap-2 text-sm text-green-700 shrink-0">
+          <CheckCircle2 className="h-4 w-4 shrink-0" />
+          These changes were accepted. The document has been updated.
+        </div>
+      )}
+
+      {revision.status === 'DECLINED' && (
+        <div className="px-4 py-3 border-t bg-red-50 flex items-center gap-2 text-sm text-red-700 shrink-0">
+          <XCircle className="h-4 w-4 shrink-0" />
+          These changes were declined. The proposing party may submit a revised version.
+        </div>
+      )}
+    </div>
+  );
+}
