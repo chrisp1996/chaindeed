@@ -24,7 +24,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           })}
           appInfo={{
             appName: 'ChainDeed',
-            learnMoreUrl: 'https://chaindeed.io/help',
+            learnMoreUrl: 'https://learn.rainbow.me/understanding-web3',
           }}
         >
           {children}
