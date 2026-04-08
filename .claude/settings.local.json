@@ -72,7 +72,11 @@
       "Bash(sudo ln:*)",
       "Bash(ln -sf /Users/christopherpierson/.nvm/versions/node/v20.20.2/bin/node /Users/christopherpierson/.local/bin/node)",
       "Bash(mkdir -p /Users/christopherpierson/.local/bin)",
-      "Bash(export PATH=\"/Users/christopherpierson/.nvm/versions/node/v20.20.2/bin:$PATH\")"
+      "Bash(export PATH=\"/Users/christopherpierson/.nvm/versions/node/v20.20.2/bin:$PATH\")",
+      "Bash(cat \"/Users/christopherpierson/Downloads/ChainDeed/src/app/\\(dashboard\\)/contracts/[id]/page.tsx\")",
+      "Bash(grep -E \"\\\\.\\(sol|ts|tsx\\)$\")",
+      "Bash(ls -la /Users/christopherpierson/Downloads/ChainDeed/contracts/*.sol)",
+      "Bash(cat \"/Users/christopherpierson/Downloads/ChainDeed/src/app/\\(dashboard\\)/contracts/new/simple/page.tsx\")"
     ]
   }
 }
