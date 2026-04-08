@@ -291,6 +291,7 @@ interface FormData {
   tenants: Tenant[];
   sellerName: string; sellerEmail: string;
   buyerName: string; buyerEmail: string;
+  titleCompanyName: string; titleCompanyEmail: string;
   price: string; earnestMoney: string;
   inspectionDays: string; closingDate: string;
   notes: string;
@@ -510,6 +511,7 @@ function SimpleTransactionWizard() {
     tenants: [],
     sellerName: '', sellerEmail: '',
     buyerName: '', buyerEmail: '',
+    titleCompanyName: '', titleCompanyEmail: '',
     price: '', earnestMoney: '',
     inspectionDays: initialType === 'residential_real_estate' ? '10' : initialType === 'commercial_real_estate' ? '30' : '',
     closingDate: '', notes: '',
@@ -578,12 +580,16 @@ function SimpleTransactionWizard() {
         body: JSON.stringify({
           type: contractType,
           state: selectedState || null,
+          titleCompany: data.titleCompanyName || null,
+          titleCompanyEmail: data.titleCompanyEmail || null,
           wizardData: {
             assetTypeKey: data.assetTypeKey,
             assetFields: data.assetFields,
             tenants: isCommercial ? data.tenants : undefined,
             sellerName: data.sellerName, sellerEmail: data.sellerEmail,
             buyerName: data.buyerName, buyerEmail: data.buyerEmail,
+            titleCompanyName: data.titleCompanyName || undefined,
+            titleCompanyEmail: data.titleCompanyEmail || undefined,
             covenants: data.covenants,
             notes: data.notes,
             inspectionDays: data.inspectionDays,
@@ -730,6 +736,23 @@ function SimpleTransactionWizard() {
                   </FieldWithHelp>
                 </div>
               </div>
+              {isRealEstate && (
+                <div className="border-t pt-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Title Company</p>
+                    <span className="text-xs bg-sky-100 text-sky-700 border border-sky-200 rounded px-2 py-0.5">Recommended</span>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">The title company verifies title is clear, confirms funding, and coordinates closing. They'll receive a dedicated checklist of their required steps.</p>
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <FieldWithHelp label="Title company name" helpText="Name of the title/escrow company" htmlFor="titleCompanyName">
+                      <Input id="titleCompanyName" placeholder="Acme Title & Escrow" value={data.titleCompanyName} onChange={e => update('titleCompanyName', e.target.value)} />
+                    </FieldWithHelp>
+                    <FieldWithHelp label="Title company email" helpText="They'll receive their steps and can mark conditions as met" htmlFor="titleCompanyEmail">
+                      <Input id="titleCompanyEmail" type="email" placeholder="closer@acmetitle.com" value={data.titleCompanyEmail} onChange={e => update('titleCompanyEmail', e.target.value)} />
+                    </FieldWithHelp>
+                  </div>
+                </div>
+              )}
               <div className="rounded-lg bg-blue-50 border border-blue-100 p-3">
                 <p className="text-xs text-blue-800"><strong>No account yet?</strong> No problem — parties can create a free ChainDeed account when they click the email link.</p>
               </div>
@@ -888,7 +911,7 @@ function SimpleTransactionWizard() {
             </div>
             <div>
               <h1 className="text-2xl font-bold">Agreement Created!</h1>
-              <p className="text-muted-foreground">Invitations sent to {data.sellerEmail} and {data.buyerEmail}</p>
+              <p className="text-muted-foreground">Invitations sent to {data.sellerEmail}, {data.buyerEmail}{data.titleCompanyEmail ? `, and ${data.titleCompanyEmail}` : ''}</p>
             </div>
           </div>
           <Card>
@@ -898,6 +921,7 @@ function SimpleTransactionWizard() {
                 { done: true, text: '✅ Digital agreement created and recorded' },
                 { done: false, text: `📧 Email sent to ${data.sellerEmail} to confirm` },
                 { done: false, text: `📧 Email sent to ${data.buyerEmail} to confirm` },
+                ...(data.titleCompanyEmail ? [{ done: false, text: `📧 Email sent to ${data.titleCompanyEmail} (title company) with their checklist` }] : []),
                 { done: false, text: '💰 Buyer deposits earnest money into secure escrow' },
                 { done: false, text: isCommercial ? `🔍 ${data.inspectionDays || 30}-day due diligence period begins` : '🔍 Inspection period begins' },
                 { done: false, text: '✅ Both parties confirm completion at closing' },

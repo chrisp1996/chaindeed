@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getStateConfig } from '@/config/stateLaws';
-import { sendEmail, buildInvitationEmail } from '@/lib/notifications';
+import { sendEmail, buildInvitationEmail, buildTitleCompanyInvitationEmail } from '@/lib/notifications';
 import { getSessionUser } from '@/lib/auth';
 
 export async function GET(req: NextRequest) {
@@ -95,6 +95,39 @@ export async function POST(req: NextRequest) {
       sendEmail(
         counterpartyEmail,
         `You've been invited to review an agreement on ChainDeed`,
+        html,
+      ).catch(() => {});
+    }
+
+    // Send title company invitation if provided
+    const titleCompanyEmail = wd.titleCompanyEmail as string | undefined;
+    const titleCompanyName = (wd.titleCompanyName as string | undefined) || 'Title Company';
+    if (titleCompanyEmail) {
+      // Build a plain-English list of title_company-responsibility steps for this contract
+      const titleSteps: string[] = [];
+      if (state && (state === 'OH' || state === 'KY' || state === 'IN')) {
+        const stateConfig = getStateConfig(state as 'OH' | 'KY' | 'IN');
+        if (stateConfig) {
+          stateConfig.offChainSteps
+            .filter(s => s.responsibility === 'title_company')
+            .forEach(s => titleSteps.push(s.title));
+        }
+      }
+      // Always include the universal title steps if not already added
+      if (!titleSteps.length) {
+        titleSteps.push('Order and certify title search', 'Issue title commitment / insurance', 'Confirm funds received at closing', 'File deed and closing documents');
+      }
+      const html = buildTitleCompanyInvitationEmail(
+        titleCompanyName,
+        contract.id,
+        type as string,
+        assetDescription,
+        appUrl,
+        titleSteps,
+      );
+      sendEmail(
+        titleCompanyEmail,
+        `You've been designated as title company on a ChainDeed agreement`,
         html,
       ).catch(() => {});
     }

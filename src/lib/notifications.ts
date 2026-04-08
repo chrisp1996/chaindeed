@@ -76,6 +76,36 @@ export function buildInvitationEmail(
   );
 }
 
+export function buildTitleCompanyInvitationEmail(
+  titleCompanyName: string,
+  contractId: string,
+  contractType: string,
+  assetDescription: string,
+  appUrl: string,
+  titleCompanySteps: string[],
+): string {
+  const typeLabel = contractType.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+  const loginUrl = `${appUrl}/auth/login?redirect=/contracts/${contractId}`;
+  const signupUrl = `${appUrl}/auth/signup?redirect=/contracts/${contractId}`;
+  const stepsHtml = titleCompanySteps.length
+    ? `<ul style="padding-left:18px;margin:8px 0">${titleCompanySteps.map(s => `<li style="margin-bottom:4px;font-size:13px;color:#334155">${s}</li>`).join('')}</ul>`
+    : '<p style="font-size:13px;color:#64748b">Your assigned steps will appear when you access the agreement.</p>';
+  return emailTemplate(
+    `<h2 style="color:#0f172a">You've been assigned as Title Company on a ChainDeed agreement</h2>
+    <p>Hi ${titleCompanyName},</p>
+    <p>A <strong>${typeLabel}</strong> has been created on ChainDeed for the following property, and your firm has been designated as the title company:</p>
+    <p style="background:#f8fafc;border-left:3px solid #0ea5e9;padding:10px 14px;border-radius:4px;font-weight:600">${assetDescription}</p>
+    <p><strong>Your assigned responsibilities include:</strong></p>
+    ${stepsHtml}
+    <p>You'll need a ChainDeed account to access the agreement, view your checklist, upload documents, and mark conditions as satisfied. Creating an account is free.</p>
+    <div style="display:flex;gap:12px;margin-top:20px;flex-wrap:wrap">
+      <a href="${signupUrl}" style="display:inline-block;background:#0ea5e9;color:white;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600">Create Account & View Agreement</a>
+      <a href="${loginUrl}" style="display:inline-block;background:white;color:#0ea5e9;padding:12px 24px;border-radius:6px;text-decoration:none;font-weight:600;border:1px solid #0ea5e9">Sign In</a>
+    </div>
+    <p style="color:#64748b;font-size:13px;margin-top:20px">Only conditions within your assigned scope can be marked complete under your login. If you believe you received this in error, you can safely ignore it.</p>`
+  );
+}
+
 export function buildExecutedContractEmail(
   recipientName: string,
   contractId: string,

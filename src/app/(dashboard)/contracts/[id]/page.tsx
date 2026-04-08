@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useMemo } from 'react';
 import { useParams } from 'next/navigation';
+import { useAuth } from '@/lib/useAuth';
 import { ActionCenter, OnChainStep, OffChainStep } from '@/components/action-center/ActionCenter';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,15 +25,24 @@ const MOCK_ON_CHAIN_STEPS: OnChainStep[] = [
   { id: '6', title: 'Deed registered digitally', status: 'pending', description: 'Ownership permanently recorded' },
 ];
 
-// Mock current user — in production, use auth session
-const CURRENT_USER_ROLE: 'buyer' | 'seller' = 'buyer';
-
 export default function ContractDetailPage() {
   const { id } = useParams<{ id: string }>();
+  const { user } = useAuth();
   const [contract, setContract] = useState<any>(null);
   const [amendments, setAmendments] = useState<Amendment[]>([]);
   const [views, setViews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Derive the current user's role from the loaded contract + session
+  const currentUserRole = useMemo<'buyer' | 'seller' | 'agent' | 'title_company'>(() => {
+    if (!user || !contract) return 'buyer';
+    if (contract.buyerId  === user.id) return 'buyer';
+    if (contract.sellerId === user.id) return 'seller';
+    if (contract.agentId  === user.id) return 'agent';
+    const tcEmail = contract.titleCompanyEmail ?? (contract.wizardData as any)?.titleCompanyEmail;
+    if (tcEmail && user.email.toLowerCase() === tcEmail.toLowerCase()) return 'title_company';
+    return 'buyer'; // fallback — read-only access still shows relevant info
+  }, [user, contract]);
 
   const fetchAmendments = useCallback(async () => {
     try {
@@ -73,11 +83,11 @@ export default function ContractDetailPage() {
     fetchAmendments();
     fetchViews();
 
-    // Record view (silent — mock buyer for now)
+    // Record view
     fetch(`/api/contracts/${id}/view`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ viewedBy: CURRENT_USER_ROLE }),
+      body: JSON.stringify({ viewedBy: user?.email ?? 'unknown' }),
     }).catch(() => {});
   }, [id, fetchAmendments, fetchViews]);
 
@@ -102,7 +112,7 @@ export default function ContractDetailPage() {
       const res = await fetch(`/api/contracts/${id}/amendments/${amendId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, respondedBy: CURRENT_USER_ROLE }),
+        body: JSON.stringify({ action, respondedBy: currentUserRole }),
       });
       if (res.ok) {
         const actionLabel = action === 'accept' ? 'accepted' : action === 'decline' ? 'declined' : 'marked for revision';
@@ -124,7 +134,7 @@ export default function ContractDetailPage() {
       const res = await fetch(`/api/contracts/${id}/amendments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ proposedBy: CURRENT_USER_ROLE, changes, summary, message }),
+        body: JSON.stringify({ proposedBy: currentUserRole, changes, summary, message }),
       });
       if (res.ok) {
         toast.success('Changes proposed successfully.');
@@ -240,7 +250,7 @@ export default function ContractDetailPage() {
               },
             ]}
             onUpdateOffChainStep={handleUpdateStep}
-            currentUserRole={CURRENT_USER_ROLE}
+            currentUserRole={currentUserRole}
           />
         </TabsContent>
 
@@ -269,7 +279,7 @@ export default function ContractDetailPage() {
             <AmendmentPanel
               contractId={id}
               amendments={amendments}
-              currentUserRole={CURRENT_USER_ROLE}
+              currentUserRole={currentUserRole === 'seller' ? 'seller' : 'buyer'}
               onAmendmentAction={handleAmendmentAction}
               onProposeChanges={handleProposeChanges}
               contractData={contractData}

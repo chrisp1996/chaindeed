@@ -186,6 +186,7 @@ model Contract {
   sellerId            String?
   agentId             String?
   titleCompany        String?
+  titleCompanyEmail   String?
   arbiterAddress      String?
 
   // Property

@@ -11,13 +11,14 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       where: { id: params.id },
       include: {
         property: true,
-        buyer: { select: { id: true, name: true, email: true, walletAddress: true } },
+        buyer:  { select: { id: true, name: true, email: true, walletAddress: true } },
         seller: { select: { id: true, name: true, email: true, walletAddress: true } },
         offChainSteps: { orderBy: { sortOrder: 'asc' } },
         signatures: true,
         generatedDocuments: true,
         dispute: true,
       },
+      // titleCompanyEmail is a scalar field on Contract — included automatically
     });
     if (!contract) return NextResponse.json({ error: 'Contract not found' }, { status: 404 });
     return NextResponse.json(contract);
@@ -34,6 +35,27 @@ export async function PATCH(req: NextRequest, { params }: { params: { id: string
       where: { id: params.id },
       select: { status: true },
     });
+
+    // If attempting to close, verify all blocker steps are satisfied first
+    if (body.status === 'CLOSED') {
+      const blockingSteps = await prisma.offChainStep.findMany({
+        where: {
+          contractId: params.id,
+          isBlocker: true,
+          status: { notIn: ['COMPLETE', 'WAIVED'] },
+        },
+        select: { title: true },
+      });
+      if (blockingSteps.length > 0) {
+        return NextResponse.json(
+          {
+            error: 'Cannot close: required conditions are not yet satisfied.',
+            blockers: blockingSteps.map(s => s.title),
+          },
+          { status: 422 }
+        );
+      }
+    }
 
     const contract = await prisma.contract.update({
       where: { id: params.id },
