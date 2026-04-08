@@ -32,7 +32,9 @@ function LoginForm() {
     }
     toast.success('Welcome back!');
     setLoading(false);
-    router.replace(redirect);
+    // Hard navigation ensures the session cookie is sent with the next request
+    // and the auth context re-initialises cleanly on the destination page.
+    window.location.href = redirect;
   }
 
   return (
