@@ -13,7 +13,8 @@ import { formatCurrency, getContractStatusLabel, formatDate } from '@/lib/utils'
 import { FileText, Home, DollarSign, Calendar, Download, AlertTriangle, CheckCircle2, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { toast } from 'sonner';
 import { StatusTimeline, buildTimelineFromContract } from '@/components/contracts/StatusTimeline';
-import { AmendmentPanel, Amendment, Change } from '@/components/contracts/AmendmentPanel';
+import { NegotiationPanel, Amendment, Change } from '@/components/contracts/NegotiationPanel';
+import { ContractDocument } from '@/components/contracts/ContractDocument';
 
 // Mock on-chain steps — in production, read from deployed contract events
 const MOCK_ON_CHAIN_STEPS: OnChainStep[] = [
@@ -32,6 +33,7 @@ export default function ContractDetailPage() {
   const [amendments, setAmendments] = useState<Amendment[]>([]);
   const [views, setViews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pendingChanges, setPendingChanges] = useState<Change[]>([]);
 
   // Derive the current user's role from the loaded contract + session
   const currentUserRole = useMemo<'buyer' | 'seller' | 'agent' | 'title_company'>(() => {
@@ -187,13 +189,19 @@ export default function ContractDetailPage() {
 
   const timelineEvents = buildTimelineFromContract(contract, views, amendments);
 
+  const wd = (contract.wizardData as Record<string, any>) ?? {};
+
   const contractData = {
     price: contract.purchasePrice ?? undefined,
     closingDate: contract.closingDate ?? undefined,
-    inspectionDays: undefined as number | undefined,
-    conditions: undefined as string | undefined,
+    inspectionDays: wd.assetFields?.inspectionDays ? Number(wd.assetFields.inspectionDays) : undefined,
+    conditions: wd.assetFields?.conditions ?? undefined,
     earnestMoney: contract.earnestMoneyAmount ?? undefined,
+    deedType: wd.assetFields?.deedType ?? undefined,
   };
+
+  const buyerName  = contract.buyer?.name  ?? contract.buyer?.email  ?? undefined;
+  const sellerName = contract.seller?.name ?? contract.seller?.email ?? undefined;
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">
@@ -329,8 +337,9 @@ export default function ContractDetailPage() {
       <Tabs defaultValue="overview" className="space-y-4">
         <TabsList className="w-full sm:w-auto">
           <TabsTrigger value="overview">Overview</TabsTrigger>
-          <TabsTrigger value="timeline">Status &amp; History</TabsTrigger>
+          <TabsTrigger value="contract">Contract</TabsTrigger>
           <TabsTrigger value="negotiate">Negotiate</TabsTrigger>
+          <TabsTrigger value="timeline">Status &amp; History</TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -356,6 +365,19 @@ export default function ContractDetailPage() {
           />
         </TabsContent>
 
+        {/* Contract Document Tab */}
+        <TabsContent value="contract">
+          <div className="space-y-4">
+            <div>
+              <h2 className="text-base font-semibold mb-1">Agreement Document</h2>
+              <p className="text-sm text-muted-foreground">
+                The full legal agreement as it currently stands. Any proposed changes from the Negotiate tab are highlighted inline in real time.
+              </p>
+            </div>
+            <ContractDocument contract={contract} pendingChanges={pendingChanges} />
+          </div>
+        </TabsContent>
+
         {/* Status & History Tab */}
         <TabsContent value="timeline">
           <div className="max-w-2xl space-y-4">
@@ -375,16 +397,20 @@ export default function ContractDetailPage() {
             <div>
               <h2 className="text-base font-semibold mb-1">Negotiate Terms</h2>
               <p className="text-sm text-muted-foreground">
-                Propose changes to the agreement. The other party will be notified and can accept, decline, or counter.
+                Propose changes to the agreement. The other party will be notified and can accept, decline, or counter-propose.
+                Switch to the <strong>Contract</strong> tab to see all proposed changes highlighted live on the document.
               </p>
             </div>
-            <AmendmentPanel
+            <NegotiationPanel
               contractId={id}
               amendments={amendments}
               currentUserRole={currentUserRole === 'seller' ? 'seller' : 'buyer'}
+              buyerName={buyerName}
+              sellerName={sellerName}
               onAmendmentAction={handleAmendmentAction}
               onProposeChanges={handleProposeChanges}
               contractData={contractData}
+              onPendingChangesChange={setPendingChanges}
             />
           </div>
         </TabsContent>

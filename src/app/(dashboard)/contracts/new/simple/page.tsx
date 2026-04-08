@@ -67,6 +67,7 @@ const ASSET_TYPES: Record<string, AssetTypeDef> = {
       { key: 'bathrooms', label: 'Bathrooms', type: 'text', placeholder: '2 or 1.5' },
       { key: 'sqft', label: 'Square Footage', type: 'number' },
       { key: 'yearBuilt', label: 'Year Built', type: 'number', help: 'Required for lead paint disclosure (pre-1978).' },
+      { key: 'deedType', label: 'Deed Type', type: 'select', required: true, help: 'The type of deed the seller will convey at closing. General Warranty is standard for most residential sales.', options: ['General Warranty Deed', 'Special Warranty Deed', 'Quit Claim Deed', 'Bargain and Sale Deed', "Trustee's Deed", "Fiduciary / Executor's Deed"] },
       { key: 'legalDescription', label: 'Legal Description (optional)', type: 'textarea', help: 'Found on your current deed.' },
     ],
   },
@@ -91,6 +92,7 @@ const ASSET_TYPES: Record<string, AssetTypeDef> = {
       { key: 'occupancyRate', label: 'Current Occupancy Rate (%)', type: 'number', placeholder: '85' },
       { key: 'noi', label: 'Net Operating Income (NOI, annual)', type: 'number', placeholder: '85000', help: 'Gross rents minus operating expenses, before debt service.' },
       { key: 'capRate', label: 'Cap Rate (%)', type: 'text', placeholder: '6.5', help: 'NOI divided by purchase price. Used to evaluate commercial property value.' },
+      { key: 'deedType', label: 'Deed Type', type: 'select', required: true, help: 'Type of deed the seller will convey. Special Warranty is common in commercial transactions.', options: ['General Warranty Deed', 'Special Warranty Deed', 'Quit Claim Deed', 'Bargain and Sale Deed', "Trustee's Deed", "Fiduciary / Executor's Deed", "Sheriff's / Court Officer's Deed"] },
       { key: 'legalDescription', label: 'Legal Description (optional)', type: 'textarea', help: 'Found on your current deed.' },
       { key: 'environmentalStatus', label: 'Environmental / Phase I Status', type: 'select', options: ['No known issues', 'Phase I complete — no issues found', 'Phase I complete — issues noted (describe in notes)', 'Phase II completed', 'Remediation ongoing', 'Unknown / not conducted'] },
     ],
@@ -884,6 +886,7 @@ function SimpleTransactionWizard() {
             items={[
               { label: 'Asset type', value: typeDef?.label || '—' },
               { label: 'Asset', value: assetDescription || '—' },
+              ...(isRealEstate && data.assetFields['deedType'] ? [{ label: 'Deed type', value: data.assetFields['deedType'] }] : []),
               { label: 'Seller', value: data.sellerName ? `${data.sellerName} (${data.sellerEmail})` : '—' },
               { label: 'Buyer', value: data.buyerName ? `${data.buyerName} (${data.buyerEmail})` : '—' },
               { label: 'Purchase price', value: formatCurrency(price), highlight: true },
