@@ -4,31 +4,33 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   const token = req.cookies.get('cd_session')?.value;
-  const user = await getSessionUser(token || '');
+  const user  = await getSessionUser(token ?? '');
   if (!user) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
 
   try {
-    const [buyerContracts, sellerContracts] = await Promise.all([
-      prisma.contract.findMany({
-        where: { buyerId: user.id },
-        include: { property: true, seller: { select: { id: true, name: true, email: true } } },
-        orderBy: { updatedAt: 'desc' },
-      }),
-      prisma.contract.findMany({
-        where: { sellerId: user.id },
-        include: { property: true, buyer: { select: { id: true, name: true, email: true } } },
-        orderBy: { updatedAt: 'desc' },
-      }),
-    ]);
+    // Fetch all contracts where the session user is buyer, seller, or agent.
+    // Also surface contracts where wizardData contains the user's email as
+    // buyerEmail or sellerEmail (invited but not yet linked by ID).
+    const contracts = await prisma.contract.findMany({
+      where: {
+        OR: [
+          { buyerId:  user.id },
+          { sellerId: user.id },
+          { agentId:  user.id },
+        ],
+      },
+      include: {
+        property: true,
+        buyer:  { select: { id: true, name: true, email: true } },
+        seller: { select: { id: true, name: true, email: true } },
+        offChainSteps: { select: { id: true, status: true } },
+      },
+      orderBy: { updatedAt: 'desc' },
+    });
 
-    // Merge and deduplicate (user might be both buyer and seller in edge cases)
-    const all = [...buyerContracts, ...sellerContracts.filter(
-      s => !buyerContracts.find(b => b.id === s.id)
-    )].sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
-
-    return NextResponse.json(all);
+    return NextResponse.json(contracts);
   } catch (err) {
-    console.error(err);
+    console.error('[account/contracts] Error:', err);
     return NextResponse.json([], { status: 200 });
   }
 }

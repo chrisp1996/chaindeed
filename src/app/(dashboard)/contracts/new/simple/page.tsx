@@ -1,6 +1,7 @@
 'use client';
 
-import { Suspense, useState } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import { useAuth } from '@/lib/useAuth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { ArrowRight, ArrowLeft, CheckCircle2, Plus, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -291,6 +292,7 @@ interface FormData {
   assetTypeKey: string;
   assetFields: Record<string, string>;
   tenants: Tenant[];
+  creatorRole: 'seller' | 'buyer';  // which side is the logged-in user?
   sellerName: string; sellerEmail: string;
   buyerName: string; buyerEmail: string;
   titleCompanyName: string; titleCompanyEmail: string; titleCompanyAcknowledged: boolean;
@@ -497,6 +499,7 @@ function TenantEditor({ tenants, onChange }: { tenants: Tenant[]; onChange: (t: 
 function SimpleTransactionWizard() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const preselectedType = searchParams.get('type');
 
   const initialType =
@@ -511,6 +514,7 @@ function SimpleTransactionWizard() {
     assetTypeKey: initialType,
     assetFields: {},
     tenants: [],
+    creatorRole: 'seller',
     sellerName: '', sellerEmail: '',
     buyerName: '', buyerEmail: '',
     titleCompanyName: '', titleCompanyEmail: '', titleCompanyAcknowledged: false,
@@ -588,6 +592,7 @@ function SimpleTransactionWizard() {
             assetTypeKey: data.assetTypeKey,
             assetFields: data.assetFields,
             tenants: isCommercial ? data.tenants : undefined,
+            creatorRole: data.creatorRole,
             sellerName: data.sellerName, sellerEmail: data.sellerEmail,
             buyerName: data.buyerName, buyerEmail: data.buyerEmail,
             titleCompanyName: data.titleCompanyName || undefined,
@@ -718,6 +723,43 @@ function SimpleTransactionWizard() {
           </div>
           <Card>
             <CardContent className="pt-6 space-y-4">
+
+              {/* Role selector — which side is the logged-in user? */}
+              <div className="rounded-lg bg-primary/5 border border-primary/20 p-4 space-y-2">
+                <p className="text-sm font-semibold">Which side are you?</p>
+                <div className="flex gap-3">
+                  {(['seller', 'buyer'] as const).map(role => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => {
+                        update('creatorRole', role);
+                        // Auto-fill this party's name + email from session
+                        if (user) {
+                          if (role === 'seller') {
+                            if (!data.sellerName)  update('sellerName',  user.name ?? '');
+                            if (!data.sellerEmail) update('sellerEmail', user.email);
+                          } else {
+                            if (!data.buyerName)  update('buyerName',  user.name ?? '');
+                            if (!data.buyerEmail) update('buyerEmail', user.email);
+                          }
+                        }
+                      }}
+                      className={`flex-1 rounded-lg border-2 px-4 py-2.5 text-sm font-medium transition-all capitalize ${
+                        data.creatorRole === role
+                          ? 'border-primary bg-primary text-white'
+                          : 'border-border bg-white hover:border-primary/50'
+                      }`}
+                    >
+                      I am the {role}
+                    </button>
+                  ))}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Your name and email will be pre-filled for the selected side. The other party will receive an email invitation.
+                </p>
+              </div>
+
               <p className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">Seller</p>
               <div className="grid sm:grid-cols-2 gap-4">
                 <FieldWithHelp label="Seller's full legal name" helpText="Full legal name of the seller" required htmlFor="sellerName">
